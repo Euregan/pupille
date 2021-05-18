@@ -1,0 +1,13 @@
+{
+  "name": "vision",
+  "version": "0.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.1",
+    "pixelmatch": "^5.2.1",
+    "pngjs": "^6.0.0",
+    "puppeteer": "^9.1.1",
+    "slugify": "^1.5.3",
+    "zustand": "^3.5.1"
+  }
+}
