@@ -117,59 +117,55 @@ const test = (browser, tests) =>
           }))
     )
 
-const configPath = process.argv[2]
+const config = JSON.parse(fs.readFileSync('./vision.config.json', 'utf-8'))
 
-if (!configPath) {
-  console.error('You need to pass a config file as the first argument')
-} else {
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+store.subscribe(render)
+store.subscribe(state =>
+  fs.writeFileSync(
+    'vision/results.json',
+    JSON.stringify(
+      {
+        ...store.getState(),
+        running: true
+      },
+      null,
+      2
+    )
+  )
+)
 
-  store.subscribe(render)
-  store.subscribe(state =>
+setup(config)
+  .then(() => {
+    let tests = {}
+    config.tests.forEach(
+      ({ url }) => (tests[slugify(url)] = { url, status: 'running' })
+    )
+    store.setState({ tests })
+
+    return puppeteer.launch().then(browser =>
+      test(browser, config.tests)
+        .then(results => {
+          browser.close()
+          return results
+        })
+        .catch(error => {
+          browser.close()
+          return Promise.reject(error)
+        })
+    )
+  })
+  .then(() =>
     fs.writeFileSync(
       'vision/results.json',
       JSON.stringify(
         {
-          ...store.getState()
+          ...store.getState(),
+          running: false,
+          done: new Date()
         },
         null,
         2
       )
     )
   )
-
-  setup(config)
-    .then(() => {
-      let tests = {}
-      config.tests.forEach(
-        ({ url }) => (tests[slugify(url)] = { url, status: 'running' })
-      )
-      store.setState({ tests })
-
-      return puppeteer.launch().then(browser =>
-        test(browser, config.tests)
-          .then(results => {
-            browser.close()
-            return results
-          })
-          .catch(error => {
-            browser.close()
-            return Promise.reject(error)
-          })
-      )
-    })
-    .then(() =>
-      fs.writeFileSync(
-        'vision/results.json',
-        JSON.stringify(
-          {
-            ...store.getState(),
-            done: new Date()
-          },
-          null,
-          2
-        )
-      )
-    )
-    .catch(console.error)
-}
+  .catch(console.error)
