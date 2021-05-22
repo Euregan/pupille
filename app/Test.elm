@@ -1,7 +1,7 @@
 module Test exposing (..)
 
 import Config exposing (Config)
-import Html exposing (Html, button, div, h3, img, text)
+import Html exposing (Html, button, div, h3, h4, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
 import Json.Decode as Decode exposing (Decoder, field, list, string)
@@ -51,25 +51,48 @@ decoder =
 view : Config -> Test -> Html msg
 view config test =
     let
-        content =
+        filePath folder =
+            "file://" ++ config.root ++ "/vision/" ++ folder ++ "/" ++ test.slug ++ ".png"
+
+        statusToHeader =
             case test.status of
                 Running ->
-                    text ""
+                    "Running"
 
                 Failure ->
-                    text ""
+                    "Failure"
 
                 Success ->
-                    text ""
+                    "Success"
 
                 New ->
-                    text ""
+                    "New"
+
+        statusToContent =
+            case test.status of
+                Running ->
+                    []
+
+                Failure ->
+                    [ img [ src <| filePath "original" ] []
+                    , img [ src <| filePath "results" ] []
+                    , img [ src <| filePath "new" ] []
+                    ]
+
+                Success ->
+                    [ img [ src <| filePath "original" ] []
+                    , div [] []
+                    , img [ src <| filePath "new" ] []
+                    ]
+
+                New ->
+                    [ div [] []
+                    , div [] []
+                    , img [ src <| filePath "new" ] []
+                    ]
     in
     div []
         [ h3 [] [ text test.url ]
-        , div [ class "image-comparison" ]
-            [ img [ src <| "file://" ++ config.root ++ "/vision/original/" ++ test.slug ++ ".png" ] []
-            , img [ src <| "file://" ++ config.root ++ "/vision/results/" ++ test.slug ++ ".png" ] []
-            , img [ src <| "file://" ++ config.root ++ "/vision/new/" ++ test.slug ++ ".png" ] []
-            ]
+        , h4 [] [ text statusToHeader ]
+        , div [ class "image-comparison" ] statusToContent
         ]
