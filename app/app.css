@@ -1,8 +1,126 @@
+ul,
+li,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+html {
+  font-family: Fira Sans;
+  letter-spacing: 0.05rem;
+  background: linear-gradient(90deg, #f6f6f6, #fafafa);
+
+  --large: 4rem;
+  --small: 2rem;
+  --border-radius: 1rem;
+  --small-border-radius: 0.4rem;
+  --box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px;
+
+  --blue: #6485ff;
+  --green: #00af6d;
+  --red: #fe5145;
+}
+
+.bg-blue {
+  background-color: var(--blue);
+}
+.bg-green {
+  background-color: var(--green);
+}
+.bg-red {
+  background-color: var(--red);
+}
+
+body {
+  padding: var(--small) var(--large);
+}
+
+main {
+  display: flex;
+  gap: var(--large);
+}
+
+button {
+  cursor: pointer;
+  background-color: white;
+  font-weight: bold;
+  border: #ccc solid 1px;
+  padding: calc(var(--small) / 2);
+  border-radius: var(--small-border-radius);
+}
+
+.dashboard-tests {
+  display: flex;
+  flex-direction: column;
+  gap: var(--large);
+}
+
+.dashboard-tests > section > ul {
+  padding: 0 var(--small) var(--small) var(--small);
+  display: flex;
+  flex-direction: column;
+  gap: var(--large);
+}
+
+aside {
+  background-color: white;
+  padding: var(--small) var(--large);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+section {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+}
+
+section h2 {
+  padding: var(--small);
+  margin-bottom: var(--small);
+  color: white;
+}
+
+section h3 {
+  margin-bottom: calc(var(--small) / 2);
+}
+
+h1 {
+  letter-spacing: 0.25rem;
+  margin-bottom: var(--small);
+}
+
 .image-comparison {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--small);
 }
 
 .image-comparison img {
   width: 100%;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;
+  border-radius: var(--small-border-radius);
+}
+
+.image-comparison img.difference {
+  display: none;
+}
+
+.image-comparison img.new {
+  display: block;
+}
+
+.image-comparison .changes:hover img.difference {
+  display: block;
+}
+
+.image-comparison .changes:hover img.new {
+  display: none;
 }

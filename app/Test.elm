@@ -48,8 +48,8 @@ decoder =
         (field "slug" string)
 
 
-view : Config -> Test -> Html msg
-view config test =
+view : Bool -> Config -> Test -> Html msg
+view displayStatus config test =
     let
         filePath folder =
             "file://" ++ config.root ++ "/vision/" ++ folder ++ "/" ++ test.slug ++ ".png"
@@ -74,25 +74,29 @@ view config test =
                     []
 
                 Failure ->
-                    [ img [ src <| filePath "original" ] []
-                    , img [ src <| filePath "results" ] []
-                    , img [ src <| filePath "new" ] []
+                    [ img [ class "original", src <| filePath "original" ] []
+                    , div [ class "changes" ]
+                        [ img [ class "difference", src <| filePath "results" ] []
+                        , img [ class "new", src <| filePath "new" ] []
+                        ]
                     ]
 
                 Success ->
-                    [ img [ src <| filePath "original" ] []
-                    , div [] []
-                    , img [ src <| filePath "new" ] []
+                    [ img [ class "original", src <| filePath "original" ] []
+                    , img [ class "new", src <| filePath "new" ] []
                     ]
 
                 New ->
                     [ div [] []
-                    , div [] []
-                    , img [ src <| filePath "new" ] []
+                    , img [ class "new", src <| filePath "new" ] []
                     ]
     in
     div []
         [ h3 [] [ text test.url ]
-        , h4 [] [ text statusToHeader ]
+        , if displayStatus then
+            h4 [] [ text statusToHeader ]
+
+          else
+            text ""
         , div [ class "image-comparison" ] statusToContent
         ]

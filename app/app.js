@@ -1,3 +1,4 @@
+import './font.css'
 import './app.css'
 import { Elm } from './Main.elm'
 import { ipcRenderer } from 'electron'
