@@ -1,6 +1,7 @@
 port module Main exposing (..)
 
 import Browser
+import Button
 import Config exposing (Config)
 import Html exposing (Html, aside, div, h1, h2, li, main_, section, text, ul)
 import Html.Attributes exposing (class)
@@ -38,6 +39,9 @@ port approveChange : String -> Cmd msg
 port rejectChange : String -> Cmd msg
 
 
+port apply : () -> Cmd msg
+
+
 port testsUpdated : (Json.Encode.Value -> msg) -> Sub msg
 
 
@@ -45,6 +49,7 @@ type Msg
     = TestsUpdated (Result Error (List Test))
     | ApproveChange String
     | RejectChange String
+    | Apply
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -61,6 +66,9 @@ update msg model =
 
         RejectChange slug ->
             ( model, rejectChange slug )
+
+        Apply ->
+            ( model, apply () )
 
 
 view : Model -> Html Msg
@@ -89,6 +97,9 @@ view model =
                 new =
                     List.filter (\test -> test.status == New) model.tests
 
+                canApply =
+                    List.length failures + List.length rejected == 0 && List.length new + List.length approved > 0
+
                 displayIfNotZero number content =
                     if number > 0 then
                         content
@@ -108,6 +119,11 @@ view model =
                         , displayIfNotZero (List.length new) <| li [] [ text <| String.fromInt (List.length new) ++ " new" ]
                         , displayIfNotZero (List.length successful) <| li [] [ text <| String.fromInt (List.length successful) ++ " successful" ]
                         ]
+                    , if canApply then
+                        Button.positive Apply "Apply"
+
+                      else
+                        text ""
                     ]
                 , div [ class "dashboard-tests" ]
                     [ displayIfNotZero (List.length failures) <|

@@ -17,6 +17,8 @@ ipcRenderer.on('config', (event, config) => {
     ipcRenderer.send('reject-test', slug)
   )
 
+  app.ports.apply.subscribe(() => ipcRenderer.send('apply'))
+
   ipcRenderer.on('results-updated', (event, results) =>
     app.ports.testsUpdated.send(
       Object.entries(results.tests).map(([slug, test]) => ({ ...test, slug }))

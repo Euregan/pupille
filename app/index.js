@@ -46,6 +46,36 @@ function createWindow() {
     })
   )
 
+  ipcMain.on('apply', event =>
+    fs.readFile('vision/results.json', 'utf-8', (error, resultsRaw) => {
+      let results = JSON.parse(resultsRaw)
+
+      let copies = []
+      Object.entries(results.tests).forEach(([slug, test]) => {
+        results.tests[slug] = { ...results.tests[slug], status: 'success' }
+        copies.push(
+          new Promise((resolve, reject) =>
+            fs.copyFile(
+              `vision/new/${slug}.png`,
+              `vision/original/${slug}.png`,
+              error => (error ? reject(error) : resolve())
+            )
+          )
+        )
+      })
+
+      Promise.all(copies).then(() => {
+        fs.unlink('vision/new', () => {})
+        fs.unlink('vision/results', () => {})
+        fs.writeFile(
+          'vision/results.json',
+          JSON.stringify(results, null, 2),
+          () => {}
+        )
+      })
+    })
+  )
+
   ipcMain.on('request-config', event =>
     fs.readFile('vision.config.json', 'utf-8', (error, config) =>
       event.reply('config', {
