@@ -9,11 +9,19 @@ ipcRenderer.on('config', (event, config) => {
     flags: config
   })
 
-  ipcRenderer.on('results-updated', (event, results) => {
+  app.ports.approveChange.subscribe(slug =>
+    ipcRenderer.send('approve-test', slug)
+  )
+
+  app.ports.rejectChange.subscribe(slug =>
+    ipcRenderer.send('reject-test', slug)
+  )
+
+  ipcRenderer.on('results-updated', (event, results) =>
     app.ports.testsUpdated.send(
       Object.entries(results.tests).map(([slug, test]) => ({ ...test, slug }))
     )
-  })
+  )
 
   ipcRenderer.send('request-results')
 })

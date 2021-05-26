@@ -24,6 +24,7 @@ html {
 
   --blue: #6485ff;
   --green: #00af6d;
+  --yellow: #ffe07b;
   --red: #fe5145;
 }
 
@@ -32,6 +33,9 @@ html {
 }
 .bg-green {
   background-color: var(--green);
+}
+.bg-yellow {
+  background-color: var(--yellow);
 }
 .bg-red {
   background-color: var(--red);
@@ -44,6 +48,7 @@ body {
 main {
   display: flex;
   gap: var(--large);
+  justify-content: center;
 }
 
 button {
@@ -73,6 +78,7 @@ aside {
   padding: var(--small) var(--large);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  white-space: nowrap;
 }
 
 section {
@@ -88,8 +94,16 @@ section h2 {
   color: white;
 }
 
-section h3 {
-  margin-bottom: calc(var(--small) / 2);
+section .test {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--small) / 2);
+}
+
+section .test .test-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: calc(var(--small) / 2);
 }
 
 h1 {

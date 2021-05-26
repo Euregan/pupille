@@ -32,11 +32,19 @@ init config =
     ( { config = config, tests = [], error = Nothing }, Cmd.none )
 
 
+port approveChange : String -> Cmd msg
+
+
+port rejectChange : String -> Cmd msg
+
+
 port testsUpdated : (Json.Encode.Value -> msg) -> Sub msg
 
 
 type Msg
     = TestsUpdated (Result Error (List Test))
+    | ApproveChange String
+    | RejectChange String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -48,17 +56,32 @@ update msg model =
         TestsUpdated (Err error) ->
             ( { model | error = Just error }, Cmd.none )
 
+        ApproveChange slug ->
+            ( model, approveChange slug )
+
+        RejectChange slug ->
+            ( model, rejectChange slug )
+
 
 view : Model -> Html Msg
 view model =
     case model.error of
         Nothing ->
             let
+                displayTest =
+                    Test.view False model.config ApproveChange RejectChange
+
                 running =
                     List.filter (\test -> test.status == Running) model.tests
 
                 failures =
                     List.filter (\test -> test.status == Failure) model.tests
+
+                approved =
+                    List.filter (\test -> test.status == Approved) model.tests
+
+                rejected =
+                    List.filter (\test -> test.status == Rejected) model.tests
 
                 successful =
                     List.filter (\test -> test.status == Success) model.tests
@@ -80,23 +103,38 @@ view model =
                         [ li [] [ text <| (String.fromInt <| List.length model.tests) ++ " tests" ]
                         , displayIfNotZero (List.length running) <| li [] [ text <| String.fromInt (List.length running) ++ " running" ]
                         , displayIfNotZero (List.length failures) <| li [] [ text <| String.fromInt (List.length failures) ++ " failed" ]
+                        , displayIfNotZero (List.length approved) <| li [] [ text <| String.fromInt (List.length approved) ++ " approved" ]
+                        , displayIfNotZero (List.length rejected) <| li [] [ text <| String.fromInt (List.length rejected) ++ " rejected" ]
                         , displayIfNotZero (List.length new) <| li [] [ text <| String.fromInt (List.length new) ++ " new" ]
                         , displayIfNotZero (List.length successful) <| li [] [ text <| String.fromInt (List.length successful) ++ " successful" ]
                         ]
                     ]
                 , div [ class "dashboard-tests" ]
-                    [ section []
-                        [ h2 [ class "bg-red" ] [ text "Failed tests" ]
-                        , ul [] <| List.map (Test.view False model.config) failures
-                        ]
-                    , section []
-                        [ h2 [ class "bg-blue" ] [ text "New tests" ]
-                        , ul [] <| List.map (Test.view False model.config) new
-                        ]
-                    , section []
-                        [ h2 [ class "bg-green" ] [ text "Successful tests" ]
-                        , ul [] <| List.map (Test.view False model.config) successful
-                        ]
+                    [ displayIfNotZero (List.length failures) <|
+                        section []
+                            [ h2 [ class "bg-yellow" ] [ text "Visual changes" ]
+                            , ul [] <| List.map displayTest failures
+                            ]
+                    , displayIfNotZero (List.length rejected) <|
+                        section []
+                            [ h2 [ class "bg-red" ] [ text "Rejected changes" ]
+                            , ul [] <| List.map displayTest rejected
+                            ]
+                    , displayIfNotZero (List.length new) <|
+                        section []
+                            [ h2 [ class "bg-blue" ] [ text "New tests" ]
+                            , ul [] <| List.map displayTest new
+                            ]
+                    , displayIfNotZero (List.length approved) <|
+                        section []
+                            [ h2 [ class "bg-green" ] [ text "Approved changes" ]
+                            , ul [] <| List.map displayTest approved
+                            ]
+                    , displayIfNotZero (List.length successful) <|
+                        section []
+                            [ h2 [ class "bg-green" ] [ text "No change" ]
+                            , ul [] <| List.map displayTest successful
+                            ]
                     ]
                 ]
 

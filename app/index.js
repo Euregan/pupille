@@ -22,6 +22,30 @@ function createWindow() {
     )
   )
 
+  ipcMain.on('approve-test', (event, slug) =>
+    fs.readFile('vision/results.json', 'utf-8', (error, resultsRaw) => {
+      let results = JSON.parse(resultsRaw)
+      results.tests[slug] = { ...results.tests[slug], status: 'approved' }
+      fs.writeFile(
+        'vision/results.json',
+        JSON.stringify(results, null, 2),
+        () => {}
+      )
+    })
+  )
+
+  ipcMain.on('reject-test', (event, slug) =>
+    fs.readFile('vision/results.json', 'utf-8', (error, resultsRaw) => {
+      let results = JSON.parse(resultsRaw)
+      results.tests[slug] = { ...results.tests[slug], status: 'rejected' }
+      fs.writeFile(
+        'vision/results.json',
+        JSON.stringify(results, null, 2),
+        () => {}
+      )
+    })
+  )
+
   ipcMain.on('request-config', event =>
     fs.readFile('vision.config.json', 'utf-8', (error, config) =>
       event.reply('config', {
