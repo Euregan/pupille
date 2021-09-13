@@ -34,10 +34,17 @@ const setup = config => {
   return Promise.resolve()
 }
 
-const checkUrl = browser => url =>
+const checkUrl = browser => (url, options) =>
   browser.newPage().then(page =>
     page
       .goto(url)
+      .then(() =>
+        options.waitFor
+          ? Promise.all(
+              options.waitFor.map(selector => page.waitForSelector(selector))
+            )
+          : Promise.resolve()
+      )
       .then(() =>
         page.screenshot({
           path: `vision/new/${sanitizeUrl(url)}.png`
@@ -99,7 +106,11 @@ const checkUrl = browser => url =>
   )
 
 const test = (browser, tests) =>
-  checkUrl(browser)(tests[0].url)
+  checkUrl(browser)(tests[0].url, {
+    waitFor: Array.isArray(tests[0].waitFor)
+      ? tests[0].waitFor
+      : [tests[0].waitFor]
+  })
     .then(() =>
       tests.length === 1
         ? { successes: [tests[0].url], failures: [] }
