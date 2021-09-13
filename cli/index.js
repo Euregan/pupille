@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const puppeteer = require('puppeteer')
 const path = require('path')
 const fs = require('fs')
@@ -5,6 +7,8 @@ const PNG = require('pngjs').PNG
 const pixelmatch = require('pixelmatch')
 const slugify = require('slugify')
 const create = require('zustand/vanilla').default
+
+const sanitizeUrl = url => slugify(url, { lower: true }).replace(/:/g, '')
 
 const { render } = require('./display')
 
@@ -36,29 +40,25 @@ const checkUrl = browser => url =>
       .goto(url)
       .then(() =>
         page.screenshot({
-          path: `vision/new/${slugify(url, { lower: true })}.png`
+          path: `vision/new/${sanitizeUrl(url)}.png`
         })
       )
       .then(() => {
         const state = { ...store.getState().tests }
 
-        if (
-          !fs.existsSync(`vision/original/${slugify(url, { lower: true })}.png`)
-        ) {
-          state[`${slugify(url)}`] = {
-            ...state[`${slugify(url)}`],
+        if (!fs.existsSync(`vision/original/${sanitizeUrl(url)}.png`)) {
+          state[`${sanitizeUrl(url)}`] = {
+            ...state[`${sanitizeUrl(url)}`],
             status: 'new'
           }
           store.setState({ tests: state })
           return Promise.resolve(mismatch)
         } else {
           const img1 = PNG.sync.read(
-            fs.readFileSync(
-              `vision/original/${slugify(url, { lower: true })}.png`
-            )
+            fs.readFileSync(`vision/original/${sanitizeUrl(url)}.png`)
           )
           const img2 = PNG.sync.read(
-            fs.readFileSync(`vision/new/${slugify(url, { lower: true })}.png`)
+            fs.readFileSync(`vision/new/${sanitizeUrl(url)}.png`)
           )
           const { width, height } = img1
           const diff = new PNG({ width, height })
@@ -75,20 +75,20 @@ const checkUrl = browser => url =>
           )
 
           fs.writeFileSync(
-            `vision/results/${slugify(url, { lower: true })}.png`,
+            `vision/results/${sanitizeUrl(url)}.png`,
             PNG.sync.write(diff)
           )
 
           if (mismatch > 0) {
-            state[`${slugify(url)}`] = {
-              ...state[`${slugify(url)}`],
+            state[`${sanitizeUrl(url)}`] = {
+              ...state[`${sanitizeUrl(url)}`],
               status: 'failure'
             }
             store.setState({ tests: state })
             return Promise.reject(mismatch)
           } else {
-            state[`${slugify(url)}`] = {
-              ...state[`${slugify(url)}`],
+            state[`${sanitizeUrl(url)}`] = {
+              ...state[`${sanitizeUrl(url)}`],
               status: 'success'
             }
             store.setState({ tests: state })
@@ -138,7 +138,7 @@ setup(config)
   .then(() => {
     let tests = {}
     config.tests.forEach(
-      ({ url }) => (tests[slugify(url)] = { url, status: 'running' })
+      ({ url }) => (tests[sanitizeUrl(url)] = { url, status: 'running' })
     )
     store.setState({ tests })
 
