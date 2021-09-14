@@ -1,6 +1,9 @@
 name: npm package
 on:
-  push
+  create:
+    tags:
+      - v*
+      
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,6 +16,8 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm install
     - uses: samuelmeuli/action-electron-builder@v1
+      with:
+        github_token: ${{ secrets.github_token }}
     - run: npm publish
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
