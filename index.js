@@ -2,7 +2,6 @@ const { app, BrowserWindow, protocol, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const chokidar = require('chokidar')
-const config = require('../vision.config.json')
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -80,7 +79,7 @@ function createWindow() {
     fs.readFile('vision.config.json', 'utf-8', (error, config) =>
       event.reply('config', {
         ...JSON.parse(config),
-        root: path.resolve(__dirname, '..')
+        root: path.resolve(__dirname)
       })
     )
   )
@@ -94,7 +93,7 @@ function createWindow() {
     win.webContents.send('results-updated', JSON.parse(results))
   })
 
-  win.loadFile('../tmp/index.html')
+  win.loadFile('tmp/index.html')
 }
 
 app.whenReady().then(() => {

@@ -2,10 +2,10 @@
   "name": "pupille",
   "version": "0.0.1",
   "license": "MIT",
-  "main": "app/index.js",
+  "main": "index.js",
   "scripts": {
     "watch": "webpack watch",
-    "app": "electron app/index.js",
+    "app": "electron index.js",
     "build": "webpack"
   },
   "dependencies": {
