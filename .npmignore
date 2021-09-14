@@ -6,3 +6,4 @@ app
 elm.json
 .prettierrc
 webpack.config.js
+dist/linux-unpacked
