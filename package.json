@@ -2,15 +2,16 @@
   "name": "vision",
   "version": "0.0.0",
   "license": "MIT",
+  "main": "app/index.js",
   "scripts": {
     "watch": "webpack watch",
-    "app": "electron app/index.js"
+    "app": "electron app/index.js",
+    "build": "webpack"
   },
   "dependencies": {
     "chalk": "^4.1.1",
     "chokidar": "^3.5.1",
     "css-loader": "^5.2.5",
-    "electron": "^12.0.9",
     "elm": "^0.19.1-5",
     "elm-webpack-loader": "^8.0.0",
     "html-webpack-plugin": "^5.3.1",
@@ -23,6 +24,8 @@
     "zustand": "^3.5.1"
   },
   "devDependencies": {
+    "electron": "^12.1.1",
+    "electron-builder": "^22.11.7",
     "webpack-cli": "^4.7.0",
     "webpack-dev-server": "^3.11.2"
   },

@@ -6,7 +6,7 @@ module.exports = {
   entry: './app/app.js',
   target: 'electron-renderer',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'tmp'),
     filename: 'app.js'
   },
   module: {
@@ -31,7 +31,7 @@ module.exports = {
   },
   plugins: [new HtmlWebpackPlugin({ template: 'app/index.html' })],
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
+    contentBase: path.join(__dirname, 'tmp'),
     compress: true,
     port: 9000
   }

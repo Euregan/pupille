@@ -94,8 +94,7 @@ function createWindow() {
     win.webContents.send('results-updated', JSON.parse(results))
   })
 
-  win.loadFile('../dist/index.html')
-  // win.loadURL('http://localhost:9000')
+  win.loadFile('../tmp/index.html')
 }
 
 app.whenReady().then(() => {
