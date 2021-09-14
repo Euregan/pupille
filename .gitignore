@@ -2,6 +2,7 @@ node_modules
 elm-stuff
 
 /pupille
+/pupille.config.json
 
 /dist
 /tmp

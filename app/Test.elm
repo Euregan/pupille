@@ -61,7 +61,7 @@ view : Bool -> Config -> (String -> msg) -> (String -> msg) -> Test -> Html msg
 view displayStatus config approveChange rejectChange test =
     let
         filePath folder =
-            "file://" ++ config.root ++ "/vision/" ++ folder ++ "/" ++ test.slug ++ ".png"
+            "file://" ++ config.root ++ "/pupille/" ++ folder ++ "/" ++ test.slug ++ ".png"
 
         statusToHeader =
             case test.status of
