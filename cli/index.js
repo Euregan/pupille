@@ -17,7 +17,7 @@ const store = create(set => ({
 }))
 
 const setup = config => {
-  const root = config.root || 'vision'
+  const root = config.root || 'pupille'
   if (!fs.existsSync(root)) {
     fs.mkdirSync(root)
   }
@@ -39,7 +39,7 @@ const checkUrl = browser => (url, options) =>
     page
       .goto(url)
       .then(() =>
-        options.waitFor
+        options.waitFor && options.waitFor.length > 0
           ? Promise.all(
               options.waitFor.map(selector => page.waitForSelector(selector))
             )
@@ -47,13 +47,13 @@ const checkUrl = browser => (url, options) =>
       )
       .then(() =>
         page.screenshot({
-          path: `vision/new/${sanitizeUrl(url)}.png`
+          path: `pupille/new/${sanitizeUrl(url)}.png`
         })
       )
       .then(() => {
         const state = { ...store.getState().tests }
 
-        if (!fs.existsSync(`vision/original/${sanitizeUrl(url)}.png`)) {
+        if (!fs.existsSync(`pupille/original/${sanitizeUrl(url)}.png`)) {
           state[`${sanitizeUrl(url)}`] = {
             ...state[`${sanitizeUrl(url)}`],
             status: 'new'
@@ -62,10 +62,10 @@ const checkUrl = browser => (url, options) =>
           return Promise.resolve(mismatch)
         } else {
           const img1 = PNG.sync.read(
-            fs.readFileSync(`vision/original/${sanitizeUrl(url)}.png`)
+            fs.readFileSync(`pupille/original/${sanitizeUrl(url)}.png`)
           )
           const img2 = PNG.sync.read(
-            fs.readFileSync(`vision/new/${sanitizeUrl(url)}.png`)
+            fs.readFileSync(`pupille/new/${sanitizeUrl(url)}.png`)
           )
           const { width, height } = img1
           const diff = new PNG({ width, height })
@@ -82,7 +82,7 @@ const checkUrl = browser => (url, options) =>
           )
 
           fs.writeFileSync(
-            `vision/results/${sanitizeUrl(url)}.png`,
+            `pupille/results/${sanitizeUrl(url)}.png`,
             PNG.sync.write(diff)
           )
 
@@ -107,9 +107,10 @@ const checkUrl = browser => (url, options) =>
 
 const test = (browser, tests) =>
   checkUrl(browser)(tests[0].url, {
-    waitFor: Array.isArray(tests[0].waitFor)
-      ? tests[0].waitFor
-      : [tests[0].waitFor]
+    waitFor:
+      tests[0].waitFor === undefined || Array.isArray(tests[0].waitFor)
+        ? tests[0].waitFor
+        : [tests[0].waitFor]
   })
     .then(() =>
       tests.length === 1
@@ -128,12 +129,12 @@ const test = (browser, tests) =>
           }))
     )
 
-const config = JSON.parse(fs.readFileSync('./vision.config.json', 'utf-8'))
+const config = JSON.parse(fs.readFileSync('./pupille.config.json', 'utf-8'))
 
 store.subscribe(render)
 store.subscribe(state =>
   fs.writeFileSync(
-    'vision/results.json',
+    'pupille/results.json',
     JSON.stringify(
       {
         ...store.getState(),
@@ -167,7 +168,7 @@ setup(config)
   })
   .then(() =>
     fs.writeFileSync(
-      'vision/results.json',
+      'pupille/results.json',
       JSON.stringify(
         {
           ...store.getState(),
