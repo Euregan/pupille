@@ -1,0 +1,8 @@
+elm-stuff
+tmp
+.github
+app
+/index.js
+elm.json
+.prettierrc
+webpack.config.js
