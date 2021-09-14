@@ -4,8 +4,23 @@ import { Elm } from './Main.elm'
 import { ipcRenderer } from 'electron'
 
 ipcRenderer.on('config', (event, config) => {
+  const appNode = document.getElementById('app')
+
+  if (config.error) {
+    const error = config
+
+    switch (error.code) {
+      case 'ENOENT':
+        return appNode.append(
+          `Seems like no ${error.path} file exist at the root of the project, please create one, then restart Pupille`
+        )
+      default:
+        return appNode.append('An error happened, sorry about that 😔')
+    }
+  }
+
   const app = Elm.Main.init({
-    node: document.getElementById('app'),
+    node: appNode,
     flags: config
   })
 
@@ -19,11 +34,13 @@ ipcRenderer.on('config', (event, config) => {
 
   app.ports.apply.subscribe(() => ipcRenderer.send('apply'))
 
-  ipcRenderer.on('results-updated', (event, results) =>
-    app.ports.testsUpdated.send(
-      Object.entries(results.tests).map(([slug, test]) => ({ ...test, slug }))
-    )
-  )
+  ipcRenderer.on('results-updated', (event, results) => {
+    if (!results.error) {
+      app.ports.testsUpdated.send(
+        Object.entries(results.tests).map(([slug, test]) => ({ ...test, slug }))
+      )
+    }
+  })
 
   ipcRenderer.send('request-results')
 })

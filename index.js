@@ -9,15 +9,15 @@ function createWindow() {
     height: 1080,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false,
-    },
+      contextIsolation: false
+    }
   })
 
   win.webContents.openDevTools()
 
-  ipcMain.on('request-results', (event) =>
+  ipcMain.on('request-results', event =>
     fs.readFile('pupille/results.json', 'utf-8', (error, results) =>
-      event.reply('results-updated', JSON.parse(results))
+      event.reply('results-updated', error || JSON.parse(results))
     )
   )
 
@@ -45,7 +45,7 @@ function createWindow() {
     })
   )
 
-  ipcMain.on('apply', (event) =>
+  ipcMain.on('apply', event =>
     fs.readFile('pupille/results.json', 'utf-8', (error, resultsRaw) => {
       let results = JSON.parse(resultsRaw)
 
@@ -57,7 +57,7 @@ function createWindow() {
             fs.copyFile(
               `pupille/new/${slug}.png`,
               `pupille/original/${slug}.png`,
-              (error) => (error ? reject(error) : resolve())
+              error => (error ? reject(error) : resolve())
             )
           )
         )
@@ -75,17 +75,25 @@ function createWindow() {
     })
   )
 
-  ipcMain.on('request-config', (event) =>
+  ipcMain.on('request-config', event =>
     fs.readFile('pupille.config.json', 'utf-8', (error, config) =>
-      event.reply('config', {
-        ...JSON.parse(config),
-        root: path.resolve(__dirname),
-      })
+      event.reply(
+        'config',
+        error
+          ? { ...error, error: true }
+          : {
+              ...JSON.parse(config),
+              root: path.resolve(process.cwd())
+            }
+      )
     )
   )
 
   fs.readFile('pupille/results.json', 'utf-8', (error, results) =>
-    win.webContents.send('results-updated', JSON.parse(results))
+    win.webContents.send(
+      'results-updated',
+      error ? { ...error, error: true } : JSON.parse(results)
+    )
   )
 
   chokidar.watch('pupille/results.json').on('all', (event, path) => {

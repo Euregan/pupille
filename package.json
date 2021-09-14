@@ -6,7 +6,8 @@
   "scripts": {
     "watch": "webpack watch",
     "app": "electron index.js",
-    "build": "webpack"
+    "build": "webpack",
+    "bundle": "npm run build && electron-builder"
   },
   "dependencies": {
     "chalk": "^4.1.1",
@@ -21,6 +22,7 @@
     "slugify": "^1.5.3",
     "style-loader": "^2.0.0",
     "webpack": "^5.37.1",
+    "yargs": "^17.1.1",
     "zustand": "^3.5.1"
   },
   "devDependencies": {
