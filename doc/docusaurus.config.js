@@ -65,10 +65,6 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula')
             title: 'More',
             items: [
               {
-                label: 'Blog',
-                to: '/blog'
-              },
-              {
                 label: 'GitHub',
                 href: 'https://github.com/euregan/pupille'
               }
