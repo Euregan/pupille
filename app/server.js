@@ -29,8 +29,8 @@ module.exports = {
                 'utf-8',
                 (error, resultsRaw) => {
                   let results = JSON.parse(resultsRaw)
-                  results.tests[slug] = {
-                    ...results.tests[slug],
+                  results.tests[payload] = {
+                    ...results.tests[payload],
                     status: 'approved'
                   }
                   fs.writeFile(
@@ -48,8 +48,8 @@ module.exports = {
                 'utf-8',
                 (error, resultsRaw) => {
                   let results = JSON.parse(resultsRaw)
-                  results.tests[slug] = {
-                    ...results.tests[slug],
+                  results.tests[payload] = {
+                    ...results.tests[payload],
                     status: 'rejected'
                   }
                   fs.writeFile(
@@ -69,16 +69,16 @@ module.exports = {
                   let results = JSON.parse(resultsRaw)
 
                   let copies = []
-                  Object.entries(results.tests).forEach(([slug, test]) => {
-                    results.tests[slug] = {
-                      ...results.tests[slug],
+                  Object.entries(results.tests).forEach(([payload, test]) => {
+                    results.tests[payload] = {
+                      ...results.tests[payload],
                       status: 'success'
                     }
                     copies.push(
                       new Promise((resolve, reject) =>
                         fs.copyFile(
-                          `pupille/new/${slug}.png`,
-                          `pupille/original/${slug}.png`,
+                          `pupille/new/${payload}.png`,
+                          `pupille/original/${payload}.png`,
                           error => (error ? reject(error) : resolve())
                         )
                       )
