@@ -17,6 +17,7 @@
     "elm-webpack-loader": "^8.0.0",
     "express": "^4.17.1",
     "html-webpack-plugin": "^5.3.1",
+    "open": "^8.2.1",
     "pixelmatch": "^5.2.1",
     "pngjs": "^6.0.0",
     "puppeteer": "^9.1.1",

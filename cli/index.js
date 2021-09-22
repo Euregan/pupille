@@ -4,6 +4,7 @@ const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const screenshotEngine = require('./screenshotEngine')
 const server = require('../app/server')
+const open = require('open')
 
 const argv = yargs(hideBin(process.argv))
   .command(
@@ -18,5 +19,5 @@ switch (command) {
   case 'check':
     return screenshotEngine.run()
   case 'open':
-    return server.start()
+    return server.start().then(url => open(url))
 }
