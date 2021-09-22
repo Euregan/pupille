@@ -21,12 +21,12 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula')
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/eurenga/pupille/edit/main/doc/'
+          editUrl: 'https://github.com/euregan/pupille/edit/main/doc/'
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
-          editUrl: 'https://github.com/eurenga/pupille/edit/main/doc/blog/'
+          editUrl: 'https://github.com/euregan/pupille/edit/main/doc/blog/'
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css')
