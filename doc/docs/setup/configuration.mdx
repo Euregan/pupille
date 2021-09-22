@@ -1,0 +1,24 @@
+---
+sidebar_position: 3
+title: Configuration
+---
+
+The configuration has to be specified in a `pupille.config.json` file,
+placed at the root of your project.
+
+## `tests`
+
+The main section of the configuration is found under the `tests`
+property. It's an array containing every page to be tested.
+
+### `url`
+
+Each test must contain a `url` property, specifying the URL to be
+tested.
+
+### `waitFor`
+
+`waitFor` is an optional property, used to specify one or more selectors
+to wait for before taking the screenshot. It is useful if you need
+Pupille to wait for some asynchronous data to load before the page is
+ready. It can either be a string or an array of strings.
