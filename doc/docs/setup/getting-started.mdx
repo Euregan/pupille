@@ -66,3 +66,8 @@ This will run the Pupille server on your machine, and open the Pupille GUI in
 your browser. The configured URLs will be automatically checked once, and the
 results will appear in the browser. You can then check the URLs at any time by
 clicking the "Check" button in the page.
+
+The results of the checked URLs are stored in a `pupille` folder located at the
+root of the project. You must **not** gitignore it, otherwise your CI will not
+be able to make sure that the URLs haven't changed. Only the last version of the
+screenshots are kept.
