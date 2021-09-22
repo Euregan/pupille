@@ -19,5 +19,8 @@ switch (command) {
   case 'check':
     return screenshotEngine.run()
   case 'open':
-    return server.start().then(url => open(url))
+    return server
+      .start()
+      .then(url => open(url))
+      .then(() => screenshotEngine.run())
 }
