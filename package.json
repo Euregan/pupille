@@ -1,13 +1,14 @@
 {
   "name": "pupille",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "license": "MIT",
   "main": "index.js",
   "scripts": {
     "watch": "webpack watch",
-    "app": "electron index.js",
+    "server": "nodemon app/index.js",
     "build": "webpack",
-    "bundle": "npm run build && electron-builder"
+    "dev": "concurrently \"npm run watch\" \"npm run server\"",
+    "cli": "node cli/index.js"
   },
   "dependencies": {
     "chalk": "^4.1.1",
@@ -29,6 +30,8 @@
     "zustand": "^3.5.1"
   },
   "devDependencies": {
+    "concurrently": "^6.3.0",
+    "nodemon": "^2.0.13",
     "webpack-cli": "^4.7.0",
     "webpack-dev-server": "^3.11.2"
   },
