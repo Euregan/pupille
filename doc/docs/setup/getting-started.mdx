@@ -2,8 +2,9 @@
 sidebar_position: 1
 title: Getting started
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 
 Pupille is a visual testing tool, running directly on your computer and CI server.
 
@@ -19,39 +20,36 @@ Using the package manager of your choice:
 <Tabs defaultValue="npm" values={[ { label: 'npm', value: 'npm' }, { label: 'yarn', value: 'yarn' } ]}>
   <TabItem value="npm">
 
-  ```shell
-  npm install pupille
-  ```
+```shell
+npm install pupille
+```
 
   </TabItem>
   <TabItem value="yarn">
 
-  ```shell
-  yarn add pupille
-  ```
+```shell
+yarn add pupille
+```
 
   </TabItem>
 </Tabs>
 
 ### Set up your configuration
 
-Create a `pupille.config.json` file with the following empty skeleton:
+Create a `pupille.config.js` file with the following empty skeleton:
 
-```json title="/pupille.config.json"
-{
-  tests: [
-  ]
-}
+```json title="/pupille.config.js"
+module.exports = {
+  "tests": []
+};
 ```
 
 You can start adding the URLs you want to test like so:
 
-```json title="/pupille.config.json"
-{
-  tests: [
-    { url: "https://pupille.io" }
-  ]
-}
+```json title="/pupille.config.js"
+module.exports = {
+  "tests": [{ "url": "https://pupille.io" }]
+};
 ```
 
 ### Testing it out
