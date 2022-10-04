@@ -6,15 +6,15 @@ const pixelmatch = require('pixelmatch')
 const slugify = require('slugify')
 const create = require('zustand/vanilla').default
 
-const sanitizeUrl = url => slugify(url, { lower: true }).replace(/:/g, '')
+const sanitizeUrl = (url) => slugify(url, { lower: true }).replace(/:/g, '')
 
 const { render } = require('./display')
 
-const store = create(set => ({
-  tests: {}
+const store = create((set) => ({
+  tests: {},
 }))
 
-const setup = config => {
+const setup = (config) => {
   const root = config.root || 'pupille'
   if (!fs.existsSync(root)) {
     fs.mkdirSync(root)
@@ -32,20 +32,20 @@ const setup = config => {
   return Promise.resolve()
 }
 
-const checkUrl = browser => (url, options) =>
-  browser.newPage().then(page =>
+const checkUrl = (browser) => (url, options) =>
+  browser.newPage().then((page) =>
     page
       .goto(url)
       .then(() =>
         options.waitFor && options.waitFor.length > 0
           ? Promise.all(
-              options.waitFor.map(selector => page.waitForSelector(selector))
+              options.waitFor.map((selector) => page.waitForSelector(selector))
             )
           : Promise.resolve()
       )
       .then(() =>
         page.screenshot({
-          path: `pupille/new/${sanitizeUrl(url)}.png`
+          path: `pupille/new/${sanitizeUrl(url)}.png`,
         })
       )
       .then(() => {
@@ -54,7 +54,7 @@ const checkUrl = browser => (url, options) =>
         if (!fs.existsSync(`pupille/original/${sanitizeUrl(url)}.png`)) {
           state[`${sanitizeUrl(url)}`] = {
             ...state[`${sanitizeUrl(url)}`],
-            status: 'new'
+            status: 'new',
           }
           store.setState({ tests: state })
           return Promise.resolve(mismatch)
@@ -75,7 +75,7 @@ const checkUrl = browser => (url, options) =>
             width,
             height,
             {
-              threshold: 0.1
+              threshold: 0.1,
             }
           )
 
@@ -87,14 +87,14 @@ const checkUrl = browser => (url, options) =>
           if (mismatch > 0) {
             state[`${sanitizeUrl(url)}`] = {
               ...state[`${sanitizeUrl(url)}`],
-              status: 'failure'
+              status: 'failure',
             }
             store.setState({ tests: state })
             return Promise.reject(mismatch)
           } else {
             state[`${sanitizeUrl(url)}`] = {
               ...state[`${sanitizeUrl(url)}`],
-              status: 'success'
+              status: 'success',
             }
             store.setState({ tests: state })
             return Promise.resolve(mismatch)
@@ -108,36 +108,36 @@ const test = (browser, tests) =>
     waitFor:
       tests[0].waitFor === undefined || Array.isArray(tests[0].waitFor)
         ? tests[0].waitFor
-        : [tests[0].waitFor]
+        : [tests[0].waitFor],
   })
     .then(() =>
       tests.length === 1
         ? { successes: [tests[0].url], failures: [] }
-        : test(browser, tests.slice(1)).then(results => ({
+        : test(browser, tests.slice(1)).then((results) => ({
             ...results,
-            successes: results.successes.concat(tests[0].url)
+            successes: results.successes.concat(tests[0].url),
           }))
     )
     .catch(() =>
       tests.length === 1
         ? { successes: [], failures: [tests[0].url] }
-        : test(browser, tests.slice(1)).then(results => ({
+        : test(browser, tests.slice(1)).then((results) => ({
             ...results,
-            failures: results.failures.concat(tests[0].url)
+            failures: results.failures.concat(tests[0].url),
           }))
     )
 
-const config = JSON.parse(fs.readFileSync('./pupille.config.json', 'utf-8'))
+module.exports.run = async () => {
+  const { default: config } = await import(`${process.cwd()}/pupille.config.js`)
 
-module.exports.run = () => {
   store.subscribe(render)
-  store.subscribe(state =>
+  store.subscribe((state) =>
     fs.writeFileSync(
       'pupille/results.json',
       JSON.stringify(
         {
           ...store.getState(),
-          running: true
+          running: true,
         },
         null,
         2
@@ -153,13 +153,13 @@ module.exports.run = () => {
       )
       store.setState({ tests })
 
-      return puppeteer.launch().then(browser =>
+      return puppeteer.launch().then((browser) =>
         test(browser, config.tests)
-          .then(results => {
+          .then((results) => {
             browser.close()
             return results
           })
-          .catch(error => {
+          .catch((error) => {
             browser.close()
             return Promise.reject(error)
           })
@@ -172,7 +172,7 @@ module.exports.run = () => {
           {
             ...store.getState(),
             running: false,
-            done: new Date()
+            done: new Date(),
           },
           null,
           2

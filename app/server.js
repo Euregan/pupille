@@ -9,8 +9,8 @@ module.exports = {
     new Promise((resolve, reject) => {
       const wss = new WebSocketServer({ port: 8080 })
 
-      wss.on('connection', client => {
-        client.on('message', message => {
+      wss.on('connection', (client) => {
+        client.on('message', (message) => {
           const { type, payload } = JSON.parse(message.toString())
           switch (type) {
             case 'request-results':
@@ -18,7 +18,7 @@ module.exports = {
                 client.send(
                   JSON.stringify({
                     type: 'results-updated',
-                    payload: error || JSON.parse(results)
+                    payload: error || JSON.parse(results),
                   })
                 )
               )
@@ -31,7 +31,7 @@ module.exports = {
                   let results = JSON.parse(resultsRaw)
                   results.tests[payload] = {
                     ...results.tests[payload],
-                    status: 'approved'
+                    status: 'approved',
                   }
                   fs.writeFile(
                     'pupille/results.json',
@@ -50,7 +50,7 @@ module.exports = {
                   let results = JSON.parse(resultsRaw)
                   results.tests[payload] = {
                     ...results.tests[payload],
-                    status: 'rejected'
+                    status: 'rejected',
                   }
                   fs.writeFile(
                     'pupille/results.json',
@@ -72,14 +72,14 @@ module.exports = {
                   Object.entries(results.tests).forEach(([payload, test]) => {
                     results.tests[payload] = {
                       ...results.tests[payload],
-                      status: 'success'
+                      status: 'success',
                     }
                     copies.push(
                       new Promise((resolve, reject) =>
                         fs.copyFile(
                           `pupille/new/${payload}.png`,
                           `pupille/original/${payload}.png`,
-                          error => (error ? reject(error) : resolve())
+                          (error) => (error ? reject(error) : resolve())
                         )
                       )
                     )
@@ -99,41 +99,51 @@ module.exports = {
               break
 
             case 'request-config':
-              fs.readFile('pupille.config.json', 'utf-8', (error, config) =>
-                client.send(
-                  JSON.stringify({
-                    type: 'config',
-                    payload: error
-                      ? { ...error, error: true }
-                      : {
-                          ...JSON.parse(config)
-                        }
-                  })
+              import(`${process.cwd()}/pupille.config.js`)
+                .then(({ default: config }) =>
+                  client.send(
+                    JSON.stringify({
+                      type: 'config',
+                      payload: config,
+                    })
+                  )
                 )
-              )
+                .catch((error) =>
+                  client.send(
+                    JSON.stringify({
+                      type: 'config',
+                      payload: { ...error, error: true },
+                    })
+                  )
+                )
               break
           }
         })
 
-        fs.readFile('pupille.config.json', 'utf-8', (error, config) =>
-          client.send(
-            JSON.stringify({
-              type: 'config',
-              payload: error
-                ? { ...error, error: true }
-                : {
-                    ...JSON.parse(config)
-                  }
-            })
+        import(`${process.cwd()}/pupille.config.js`)
+          .then(({ default: config }) =>
+            client.send(
+              JSON.stringify({
+                type: 'config',
+                payload: config,
+              })
+            )
           )
-        )
+          .catch((error) =>
+            client.send(
+              JSON.stringify({
+                type: 'config',
+                payload: { ...error, error: true },
+              })
+            )
+          )
 
         chokidar.watch('pupille/results.json').on('all', (event, path) => {
           const results = fs.readFileSync('pupille/results.json', 'utf-8')
           client.send(
             JSON.stringify({
               type: 'results-updated',
-              payload: JSON.parse(results)
+              payload: JSON.parse(results),
             })
           )
         })
@@ -149,5 +159,5 @@ module.exports = {
         console.log(`Pupille running at http://localhost:${port}`)
         resolve(`http://localhost:${port}`)
       })
-    })
+    }),
 }
