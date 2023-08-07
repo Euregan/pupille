@@ -167,7 +167,7 @@ const test = async (
   }
 }
 
-export const run = async () => {
+const getConfig = async (): Promise<Config> => {
   if (!fs.existsSync(`${process.cwd()}/pupille.config.js`)) {
     throw new Error(
       `There is no config in ${process.cwd()}. Make sure your configuration file is called "pupille.config.js"`
@@ -185,25 +185,14 @@ export const run = async () => {
       `Your configuration file didn't return the expected object:\n${configValidation.error}`
     )
   }
-  const config = configValidation.data
+  return configValidation.data
+}
+
+export const run = async () => {
+  const config = await getConfig()
 
   // We setup all the required folders for the tests results
   await setupFolders(config)
-
-  // We subscribe to any update on the tests result
-  store.subscribe((state) =>
-    fs.writeFileSync(
-      `${config.root}/results.json`,
-      JSON.stringify(
-        {
-          ...state,
-          running: true,
-        },
-        null,
-        2
-      )
-    )
-  )
 
   // We setup the tests in the store
   const tests = Object.fromEntries(
@@ -220,19 +209,6 @@ export const run = async () => {
     const result = await test(browser, config.tests)
     browser.close()
 
-    fs.writeFileSync(
-      `${config.root}/results.json`,
-      JSON.stringify(
-        {
-          ...store.getState(),
-          running: false,
-          done: new Date(),
-        },
-        null,
-        2
-      )
-    )
-
     return result
   } catch (error) {
     browser.close()
@@ -240,7 +216,38 @@ export const run = async () => {
   }
 }
 
+export const approve = async (tests?: Array<string>) => {
+  const config = await getConfig()
+
+  await Promise.all(
+    (tests || config.tests.map(({ url }) => url)).map(
+      (test) =>
+        new Promise((resolve, reject) =>
+          fs.copyFile(
+            `${config.root}/new/${sanitizeUrl(test)}.png`,
+            `${config.root}/original/${sanitizeUrl(test)}.png`,
+            (error) => (error ? reject(error) : resolve(test))
+          )
+        )
+    )
+  )
+
+  await Promise.all([
+    new Promise((resolve, reject) =>
+      fs.unlink(`${config.root}/new`, (error) =>
+        error ? reject(error) : resolve(undefined)
+      )
+    ),
+    new Promise((resolve, reject) =>
+      fs.unlink(`${config.root}/results`, (error) =>
+        error ? reject(error) : resolve(undefined)
+      )
+    ),
+  ])
+}
+
 export default {
   store,
   run,
+  approve,
 }

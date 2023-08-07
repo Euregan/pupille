@@ -2,7 +2,6 @@
 
 import engine from '@pupille/engine'
 import { program } from 'commander'
-// import open from 'open'
 import pckg from '../package.json'
 import display from './display'
 
@@ -29,13 +28,17 @@ program
   })
 
 program
+  .command('approve <tests>')
+  .description(
+    'Approves the tests specified by their URL. You can specify multiple URL separated by ",", or approve all of them with "*"'
+  )
+  .action(async (tests: string) => {
+    engine.approve(tests === '*' ? undefined : tests.split(','))
+  })
+
+program
   .command('open')
   .description('Opens pupille to review the screenshots taken')
-  .action(() => {
-    // server
-    //   .start()
-    //   .then((url) => open(url))
-    //   .then(() => engine.run())
-  })
+  .action(() => {})
 
 program.parse()
