@@ -9,6 +9,7 @@ let app = null
 
 server.onmessage = ({ data }) => {
   const { type, payload } = JSON.parse(data)
+
   switch (type) {
     case 'config':
       const config = payload
@@ -21,20 +22,21 @@ server.onmessage = ({ data }) => {
               `Seems like no ${error.path} file exist at the root of the project, please create one, then restart Pupille`
             )
           default:
+            console.error(error)
             return appNode.append('An error happened, sorry about that 😔')
         }
       }
 
       app = Elm.Main.init({
         node: appNode,
-        flags: config
+        flags: config,
       })
 
-      app.ports.approveChange.subscribe(slug =>
+      app.ports.approveChange.subscribe((slug) =>
         server.send(JSON.stringify({ type: 'approve-test', payload: slug }))
       )
 
-      app.ports.rejectChange.subscribe(slug =>
+      app.ports.rejectChange.subscribe((slug) =>
         server.send(JSON.stringify({ type: 'reject-test', payload: slug }))
       )
 
@@ -51,7 +53,7 @@ server.onmessage = ({ data }) => {
         app.ports.testsUpdated.send(
           Object.entries(results.tests).map(([slug, test]) => ({
             ...test,
-            slug
+            slug,
           }))
         )
       }

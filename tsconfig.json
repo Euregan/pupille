@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "useDefineForClassFields": true,
+    "lib": ["es2023"],
+    "module": "NodeNext",
+    "moduleResolution": "Node",
+    "target": "es2022",
+
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+
+    /* Bundler mode */
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}
