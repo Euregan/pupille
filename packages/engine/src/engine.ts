@@ -1,5 +1,5 @@
 import puppeteer, { Browser } from 'puppeteer'
-import fs from 'fs'
+import fs from 'fs/promises'
 import { PNG } from 'pngjs'
 import pixelmatch from 'pixelmatch'
 import slugify from 'slugify'
@@ -39,21 +39,17 @@ type Config = z.infer<typeof configSchema>
 
 const setupFolders = async (config: Config) => {
   const root = config.root
-  if (!fs.existsSync(root)) {
-    fs.mkdirSync(root)
-  }
-  if (!fs.existsSync(`${root}/new`)) {
-    fs.mkdirSync(`${root}/new`)
-  }
-  if (!fs.existsSync(`${root}/original`)) {
-    fs.mkdirSync(`${root}/original`)
-  }
-  if (!fs.existsSync(`${root}/results`)) {
-    fs.mkdirSync(`${root}/results`)
-  }
-  if (!fs.existsSync(`${root}/.gitignore`)) {
-    fs.writeFileSync(`${root}/.gitignore`, 'new\nresults')
-  }
+
+  await fs.access(root).catch(() => fs.mkdir(root))
+
+  await Promise.all([
+    fs.access(`${root}/new`).catch(() => fs.mkdir(`${root}/new`)),
+    fs.access(`${root}/original`).catch(() => fs.mkdir(`${root}/original`)),
+    fs.access(`${root}/results`).catch(() => fs.mkdir(`${root}/results`)),
+    fs
+      .access(`${root}/.gitignore`)
+      .catch(() => fs.writeFile(`${root}/.gitignore`, 'new\nresults')),
+  ])
 }
 
 type Options = {
@@ -79,7 +75,9 @@ const checkUrl =
 
     const state = { ...store.getState().tests }
 
-    if (!fs.existsSync(`pupille/original/${sanitizeUrl(url)}.png`)) {
+    try {
+      await fs.access(`pupille/original/${sanitizeUrl(url)}.png`)
+    } catch {
       state[`${sanitizeUrl(url)}`] = {
         ...state[`${sanitizeUrl(url)}`],
         status: 'new',
@@ -87,49 +85,49 @@ const checkUrl =
       store.setState({ tests: state })
 
       return 0
-    } else {
-      const img1 = PNG.sync.read(
-        fs.readFileSync(`pupille/original/${sanitizeUrl(url)}.png`)
-      )
-      const img2 = PNG.sync.read(
-        fs.readFileSync(`pupille/new/${sanitizeUrl(url)}.png`)
-      )
-      const { width, height } = img1
-      const diff = new PNG({ width, height })
+    }
 
-      const mismatch = pixelmatch(
-        img1.data,
-        img2.data,
-        diff.data,
-        width,
-        height,
-        {
-          threshold: 0.1,
-        }
-      )
+    const img1 = PNG.sync.read(
+      await fs.readFile(`pupille/original/${sanitizeUrl(url)}.png`)
+    )
+    const img2 = PNG.sync.read(
+      await fs.readFile(`pupille/new/${sanitizeUrl(url)}.png`)
+    )
+    const { width, height } = img1
+    const diff = new PNG({ width, height })
 
-      fs.writeFileSync(
-        `pupille/results/${sanitizeUrl(url)}.png`,
-        PNG.sync.write(diff)
-      )
-
-      if (mismatch > 0) {
-        state[`${sanitizeUrl(url)}`] = {
-          ...state[`${sanitizeUrl(url)}`],
-          status: 'failure',
-        }
-        store.setState({ tests: state })
-
-        return Promise.reject(mismatch)
-      } else {
-        state[`${sanitizeUrl(url)}`] = {
-          ...state[`${sanitizeUrl(url)}`],
-          status: 'success',
-        }
-        store.setState({ tests: state })
-
-        return mismatch
+    const mismatch = pixelmatch(
+      img1.data,
+      img2.data,
+      diff.data,
+      width,
+      height,
+      {
+        threshold: 0.1,
       }
+    )
+
+    await fs.writeFile(
+      `pupille/results/${sanitizeUrl(url)}.png`,
+      PNG.sync.write(diff)
+    )
+
+    if (mismatch > 0) {
+      state[`${sanitizeUrl(url)}`] = {
+        ...state[`${sanitizeUrl(url)}`],
+        status: 'failure',
+      }
+      store.setState({ tests: state })
+
+      return Promise.reject(mismatch)
+    } else {
+      state[`${sanitizeUrl(url)}`] = {
+        ...state[`${sanitizeUrl(url)}`],
+        status: 'success',
+      }
+      store.setState({ tests: state })
+
+      return mismatch
     }
   }
 
@@ -171,11 +169,13 @@ const test = async (
 }
 
 const getConfig = async (): Promise<Config> => {
-  if (!fs.existsSync(`${process.cwd()}/pupille.config.js`)) {
-    throw new Error(
-      `There is no config in ${process.cwd()}. Make sure your configuration file is called "pupille.config.js"`
+  await fs
+    .access(`${process.cwd()}/pupille.config.js`)
+    .catch(() =>
+      Promise.reject(
+        `There is no config in ${process.cwd()}. Make sure your configuration file is called "pupille.config.js"`
+      )
     )
-  }
 
   const { default: rawConfig } = await import(
     `${process.cwd()}/pupille.config.js`
@@ -224,11 +224,7 @@ export const approve = async (urls?: Array<string>) => {
 
   // If no urls have been specified, this means the user wants to approve all the pending tests
   if (!urls) {
-    const files = await new Promise<Array<string>>((resolve, reject) =>
-      fs.readdir(`${config.root}/new`, (error, files) =>
-        error ? reject(error) : resolve(files)
-      )
-    )
+    const files = await fs.readdir(`${config.root}/new`)
 
     urls = config.tests
       .map(({ url }) => url)
@@ -236,36 +232,24 @@ export const approve = async (urls?: Array<string>) => {
   }
 
   await Promise.all(
-    urls.map(
-      (url) =>
-        new Promise((resolve, reject) =>
-          fs.copyFile(
-            `${config.root}/new/${sanitizeUrl(url)}.png`,
-            `${config.root}/original/${sanitizeUrl(url)}.png`,
-            (error) => (error ? reject(error) : resolve(url))
-          )
-        )
+    urls.map((url) =>
+      fs.copyFile(
+        `${config.root}/new/${sanitizeUrl(url)}.png`,
+        `${config.root}/original/${sanitizeUrl(url)}.png`
+      )
     )
   )
 
   await Promise.all(
     urls
-      .map(
-        (url) =>
-          new Promise((resolve) =>
-            fs.unlink(`${config.root}/new/${sanitizeUrl(url)}.png`, () =>
-              resolve(undefined)
-            )
-          )
+      .map((url) =>
+        fs.unlink(`${config.root}/new/${sanitizeUrl(url)}.png`).catch(() => {})
       )
       .concat(
-        urls.map(
-          (url) =>
-            new Promise((resolve) =>
-              fs.unlink(`${config.root}/results/${sanitizeUrl(url)}.png`, () =>
-                resolve(undefined)
-              )
-            )
+        urls.map((url) =>
+          fs
+            .unlink(`${config.root}/results/${sanitizeUrl(url)}.png`)
+            .catch(() => {})
         )
       )
   )
