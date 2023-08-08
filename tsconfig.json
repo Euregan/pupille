@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "useDefineForClassFields": true,
+    "lib": ["es2023"],
+    "moduleResolution": "Node",
+    "target": "es2022",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}

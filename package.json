@@ -2,32 +2,22 @@
   "name": "pupille",
   "version": "0.2.3",
   "license": "MIT",
-  "main": "index.js",
+  "bin": "packages/cli/dist/index.js",
   "scripts": {
-    "watch": "webpack watch",
-    "server": "nodemon app/index.js",
-    "build": "webpack",
-    "dev": "concurrently \"npm run watch\" \"npm run server\"",
-    "cli": "node cli/index.js"
+    "build": "turbo run build"
   },
   "dependencies": {
-    "chalk": "^4.1.1",
     "chokidar": "^3.5.1",
     "css-loader": "^5.2.5",
     "elm": "^0.19.1-5",
     "elm-webpack-loader": "^8.0.0",
     "express": "^4.17.1",
     "html-webpack-plugin": "^5.3.1",
-    "open": "^8.2.1",
-    "pixelmatch": "^5.2.1",
-    "pngjs": "^6.0.0",
-    "puppeteer": "^9.1.1",
-    "slugify": "^1.5.3",
     "style-loader": "^2.0.0",
+    "turbo": "^1.10.12",
+    "vite-node": "^0.34.1",
     "webpack": "^5.37.1",
-    "ws": "^8.2.2",
-    "yargs": "^17.1.1",
-    "zustand": "^3.5.1"
+    "ws": "^8.2.2"
   },
   "devDependencies": {
     "concurrently": "^6.3.0",
@@ -35,5 +25,7 @@
     "webpack-cli": "^4.7.0",
     "webpack-dev-server": "^3.11.2"
   },
-  "bin": "cli/index.js"
+  "workspaces": [
+    "packages/*"
+  ]
 }

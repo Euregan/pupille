@@ -1,7 +1,3 @@
 node_modules
-elm-stuff
 
-/pupille
-/pupille.config.js
-
-/dist
+.turbo
