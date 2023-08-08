@@ -2,11 +2,10 @@
 
 import engine from '@pupille/engine'
 import { program } from 'commander'
-import pckg from '../package.json'
 import display from './display'
 import chalk from 'chalk'
 
-program.name(pckg.name).description(pckg.description).version(pckg.version)
+program.name('pupille').description('CLI for pupille').version('1.0.0')
 
 program
   .command('check')

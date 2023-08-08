@@ -3,8 +3,7 @@
   "description": "CLI for pupille",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
-  "bin": "dist/pupille.js",
+  "bin": "dist/index.js",
   "scripts": {
     "dev": "vite-node -w src/index.ts",
     "build": "tsc --project ."
@@ -15,7 +14,8 @@
     "vite": "^4.4.5"
   },
   "dependencies": {
-    "chalk": "^5.3.0",
+    "@pupille/engine": "*",
+    "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "open": "^9.1.0"
   }
