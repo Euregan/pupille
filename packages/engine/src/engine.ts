@@ -51,6 +51,9 @@ const setupFolders = async (config: Config) => {
   if (!fs.existsSync(`${root}/results`)) {
     fs.mkdirSync(`${root}/results`)
   }
+  if (!fs.existsSync(`${root}/.gitignore`)) {
+    fs.writeFileSync(`${root}/.gitignore`, 'new\nresults')
+  }
 }
 
 type Options = {
@@ -216,34 +219,56 @@ export const run = async () => {
   }
 }
 
-export const approve = async (tests?: Array<string>) => {
+export const approve = async (urls?: Array<string>) => {
   const config = await getConfig()
 
+  // If no urls have been specified, this means the user wants to approve all the pending tests
+  if (!urls) {
+    const files = await new Promise<Array<string>>((resolve, reject) =>
+      fs.readdir(`${config.root}/new`, (error, files) =>
+        error ? reject(error) : resolve(files)
+      )
+    )
+
+    urls = config.tests
+      .map(({ url }) => url)
+      .filter((url) => files.includes(`${sanitizeUrl(url)}.png`))
+  }
+
   await Promise.all(
-    (tests || config.tests.map(({ url }) => url)).map(
-      (test) =>
+    urls.map(
+      (url) =>
         new Promise((resolve, reject) =>
           fs.copyFile(
-            `${config.root}/new/${sanitizeUrl(test)}.png`,
-            `${config.root}/original/${sanitizeUrl(test)}.png`,
-            (error) => (error ? reject(error) : resolve(test))
+            `${config.root}/new/${sanitizeUrl(url)}.png`,
+            `${config.root}/original/${sanitizeUrl(url)}.png`,
+            (error) => (error ? reject(error) : resolve(url))
           )
         )
     )
   )
 
-  await Promise.all([
-    new Promise((resolve, reject) =>
-      fs.unlink(`${config.root}/new`, (error) =>
-        error ? reject(error) : resolve(undefined)
+  await Promise.all(
+    urls
+      .map(
+        (url) =>
+          new Promise((resolve) =>
+            fs.unlink(`${config.root}/new/${sanitizeUrl(url)}.png`, () =>
+              resolve(undefined)
+            )
+          )
       )
-    ),
-    new Promise((resolve, reject) =>
-      fs.unlink(`${config.root}/results`, (error) =>
-        error ? reject(error) : resolve(undefined)
+      .concat(
+        urls.map(
+          (url) =>
+            new Promise((resolve) =>
+              fs.unlink(`${config.root}/results/${sanitizeUrl(url)}.png`, () =>
+                resolve(undefined)
+              )
+            )
+        )
       )
-    ),
-  ])
+  )
 }
 
 export default {
