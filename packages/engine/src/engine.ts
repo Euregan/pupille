@@ -224,19 +224,26 @@ export const approve = async (urls?: Array<string>) => {
 
   // If no urls have been specified, this means the user wants to approve all the pending tests
   if (!urls) {
-    const files = await fs.readdir(`${config.root}/new`)
+    const pendingFiles = await fs.readdir(`${config.root}/new`)
 
     urls = config.tests
       .map(({ url }) => url)
-      .filter((url) => files.includes(`${sanitizeUrl(url)}.png`))
+      .filter((url) => pendingFiles.includes(`${sanitizeUrl(url)}.png`))
   }
 
-  await Promise.all(
+  const movedTests = await Promise.all(
     urls.map((url) =>
-      fs.copyFile(
-        `${config.root}/new/${sanitizeUrl(url)}.png`,
-        `${config.root}/original/${sanitizeUrl(url)}.png`
-      )
+      fs
+        .copyFile(
+          `${config.root}/new/${sanitizeUrl(url)}.png`,
+          `${config.root}/original/${sanitizeUrl(url)}.png`
+        )
+        .then(() => ({
+          success: url,
+        }))
+        .catch(() => ({
+          failure: url,
+        }))
     )
   )
 
@@ -253,6 +260,24 @@ export const approve = async (urls?: Array<string>) => {
         )
       )
   )
+
+  const remainingFiles = await fs.readdir(`${config.root}/new`)
+
+  return {
+    approved: (
+      movedTests.filter((file) => 'success' in file) as Array<{
+        success: string
+      }>
+    ).map(({ success }) => success),
+    failed: (
+      movedTests.filter((file) => 'failure' in file) as Array<{
+        failure: string
+      }>
+    ).map(({ failure }) => failure),
+    remaining: config.tests
+      .map(({ url }) => url)
+      .filter((url) => remainingFiles.includes(`${sanitizeUrl(url)}.png`)),
+  }
 }
 
 export default {
