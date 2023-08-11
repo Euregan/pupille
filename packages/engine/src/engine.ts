@@ -1,4 +1,4 @@
-import puppeteer, { Browser } from 'puppeteer'
+import puppeteer, { Browser, Page } from 'puppeteer'
 import fs from 'fs/promises'
 import { PNG } from 'pngjs'
 import pixelmatch from 'pixelmatch'
@@ -25,14 +25,26 @@ export const store = createStore<EngineState>()(() => ({
   tests: {},
 }))
 
+const optionSchema = z.object({
+  url: z.string(),
+  waitFor: z.union([z.string(), z.array(z.string())]).optional(),
+  prepare: z
+    .function()
+    .args(z.instanceof(Page))
+    .returns(z.promise(z.undefined()))
+    .optional()
+    .default(async () => {}),
+})
+
 const configSchema = z.object({
   root: z.string().optional().default('pupille'),
-  tests: z.array(
-    z.object({
-      url: z.string(),
-      waitFor: z.union([z.string(), z.array(z.string())]).optional(),
-    })
-  ),
+  prepare: z
+    .function()
+    .args(z.instanceof(Page))
+    .returns(z.promise(z.undefined()))
+    .optional()
+    .default(async () => {}),
+  tests: z.array(optionSchema),
 })
 
 type Config = z.infer<typeof configSchema>
@@ -53,20 +65,22 @@ const setupFolders = async (config: Config) => {
 }
 
 type Options = {
-  waitFor?: Array<string>
+  waitFor: Array<string>
+  prepare: (page: Page) => Promise<undefined>
 }
 
 const checkUrl =
   (browser: Browser) => async (url: string, options: Options) => {
     const page = await browser.newPage()
+
+    await options.prepare(page)
+
     await page.goto(url)
 
     // If the user has specified selectors to wait for, we wait for them
-    if (options.waitFor && options.waitFor.length > 0) {
-      await Promise.all(
-        options.waitFor.map((selector) => page.waitForSelector(selector))
-      )
-    }
+    await Promise.all(
+      options.waitFor.map((selector) => page.waitForSelector(selector))
+    )
 
     // We take a new screenshot
     await page.screenshot({
@@ -138,7 +152,8 @@ type TestingResults = {
 
 const test = async (
   browser: Browser,
-  tests: Config['tests']
+  tests: Config['tests'],
+  config: Config
 ): Promise<TestingResults> => {
   if (tests.length === 0) {
     return { successes: [], failures: [] }
@@ -147,21 +162,25 @@ const test = async (
   try {
     await checkUrl(browser)(tests[0].url, {
       waitFor:
-        tests[0].waitFor === undefined || Array.isArray(tests[0].waitFor)
+        tests[0].waitFor === undefined
+          ? []
+          : Array.isArray(tests[0].waitFor)
           ? tests[0].waitFor
           : [tests[0].waitFor],
+      prepare: (page: Page) =>
+        config.prepare(page).then(() => tests[0].prepare(page)),
     })
 
     return tests.length === 1
       ? { successes: [tests[0].url], failures: [] }
-      : test(browser, tests.slice(1)).then((results) => ({
+      : test(browser, tests.slice(1), config).then((results) => ({
           ...results,
           successes: results.successes.concat(tests[0].url),
         }))
   } catch (error) {
     return tests.length === 1
       ? { successes: [], failures: [tests[0].url] }
-      : test(browser, tests.slice(1)).then((results) => ({
+      : test(browser, tests.slice(1), config).then((results) => ({
           ...results,
           failures: results.failures.concat(tests[0].url),
         }))
@@ -209,7 +228,7 @@ export const run = async () => {
   const browser = await puppeteer.launch({ headless: 'new' })
 
   try {
-    const result = await test(browser, config.tests)
+    const result = await test(browser, config.tests, config)
     browser.close()
 
     return result
