@@ -48,6 +48,7 @@ const configSchema = z.object({
     .default(
       () => () => new Promise<undefined>((resolve) => resolve(undefined))
     ),
+  baseUrl: z.string(),
   tests: z.array(optionSchema),
 })
 
@@ -70,6 +71,7 @@ const setupFolders = async (config: Config) => {
 
 type Options = {
   root: string
+  baseUrl: string
   waitFor: Array<string>
   prepare: (page: Page) => Promise<undefined>
 }
@@ -80,7 +82,7 @@ const checkUrl =
 
     await options.prepare(page)
 
-    await page.goto(url)
+    await page.goto(`${options.baseUrl}${url}`)
 
     // If the user has specified selectors to wait for, we wait for them
     await Promise.all(
@@ -167,6 +169,7 @@ const test = async (
   try {
     await checkUrl(browser)(tests[0].url, {
       root: config.root,
+      baseUrl: config.baseUrl,
       waitFor:
         tests[0].waitFor === undefined
           ? []
