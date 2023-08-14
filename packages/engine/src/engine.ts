@@ -33,7 +33,9 @@ const optionSchema = z.object({
     .args(z.instanceof(Page))
     .returns(z.promise(z.undefined()))
     .optional()
-    .default(async () => {}),
+    .default(
+      () => () => new Promise<undefined>((resolve) => resolve(undefined))
+    ),
 })
 
 const configSchema = z.object({
@@ -43,7 +45,9 @@ const configSchema = z.object({
     .args(z.instanceof(Page))
     .returns(z.promise(z.undefined()))
     .optional()
-    .default(async () => {}),
+    .default(
+      () => () => new Promise<undefined>((resolve) => resolve(undefined))
+    ),
   tests: z.array(optionSchema),
 })
 
