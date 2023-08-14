@@ -1,5 +1,6 @@
 import typescript from '@rollup/plugin-typescript'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
+import shebang from 'rollup-plugin-shebang-bin'
 
 export default {
   input: 'src/index.ts',
@@ -8,5 +9,9 @@ export default {
     format: 'cjs',
   },
   external: [/node_modules/],
-  plugins: [typescript({ tsconfig: './tsconfig.json' }), nodeResolve()],
+  plugins: [
+    typescript({ tsconfig: './tsconfig.json' }),
+    nodeResolve(),
+    shebang(),
+  ],
 }
