@@ -2,11 +2,8 @@
   "name": "@pupille/engine",
   "private": true,
   "version": "1.0.0",
-  "main": "dist/engine.js",
+  "main": "src/engine.ts",
   "types": "src/engine.ts",
-  "scripts": {
-    "build": "tsc --project ."
-  },
   "devDependencies": {
     "@types/pixelmatch": "^5.2.4",
     "@types/pngjs": "^6.0.1",

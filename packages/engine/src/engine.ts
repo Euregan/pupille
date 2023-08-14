@@ -65,6 +65,7 @@ const setupFolders = async (config: Config) => {
 }
 
 type Options = {
+  root: string
   waitFor: Array<string>
   prepare: (page: Page) => Promise<undefined>
 }
@@ -84,13 +85,13 @@ const checkUrl =
 
     // We take a new screenshot
     await page.screenshot({
-      path: `pupille/new/${sanitizeUrl(url)}.png`,
+      path: `${options.root}/new/${sanitizeUrl(url)}.png`,
     })
 
     const state = { ...store.getState().tests }
 
     try {
-      await fs.access(`pupille/original/${sanitizeUrl(url)}.png`)
+      await fs.access(`${options.root}/original/${sanitizeUrl(url)}.png`)
     } catch {
       state[`${sanitizeUrl(url)}`] = {
         ...state[`${sanitizeUrl(url)}`],
@@ -102,10 +103,10 @@ const checkUrl =
     }
 
     const img1 = PNG.sync.read(
-      await fs.readFile(`pupille/original/${sanitizeUrl(url)}.png`)
+      await fs.readFile(`${options.root}/original/${sanitizeUrl(url)}.png`)
     )
     const img2 = PNG.sync.read(
-      await fs.readFile(`pupille/new/${sanitizeUrl(url)}.png`)
+      await fs.readFile(`${options.root}/new/${sanitizeUrl(url)}.png`)
     )
     const { width, height } = img1
     const diff = new PNG({ width, height })
@@ -122,7 +123,7 @@ const checkUrl =
     )
 
     await fs.writeFile(
-      `pupille/results/${sanitizeUrl(url)}.png`,
+      `${options.root}/results/${sanitizeUrl(url)}.png`,
       PNG.sync.write(diff)
     )
 
@@ -161,6 +162,7 @@ const test = async (
 
   try {
     await checkUrl(browser)(tests[0].url, {
+      root: config.root,
       waitFor:
         tests[0].waitFor === undefined
           ? []
