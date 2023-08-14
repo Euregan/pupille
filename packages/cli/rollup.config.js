@@ -12,6 +12,8 @@ export default {
   plugins: [
     typescript({ tsconfig: './tsconfig.json' }),
     nodeResolve(),
-    shebang(),
+    shebang({
+      include: ['**/*.ts'],
+    }),
   ],
 }
