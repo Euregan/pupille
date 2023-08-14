@@ -6,7 +6,7 @@ export default {
   input: 'src/index.ts',
   output: {
     file: './dist/pupille.js',
-    format: 'cjs',
+    format: 'es',
   },
   external: [/node_modules/],
   plugins: [

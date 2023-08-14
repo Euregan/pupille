@@ -2,7 +2,7 @@
   "name": "@pupille/cli",
   "description": "CLI for pupille",
   "private": true,
-  "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "build": "rollup --config rollup.config.js"
   },
