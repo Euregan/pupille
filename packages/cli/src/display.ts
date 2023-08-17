@@ -1,5 +1,13 @@
-import { EngineState } from '@pupille/engine'
+import { EngineState, FailedTest } from '@pupille/engine'
 import chalk from 'chalk'
+
+const stageToLabel = (stage: FailedTest['stage']): string =>
+  ({
+    prepare: 'when setting up the test. Please check your prepare functions.',
+    loading: 'when loading the page.',
+    waiting: 'when waiting for some elements to appear.',
+    comparing: 'when comparing previous and current screenshots.',
+  }[stage])
 
 export default {
   render: (state: EngineState) => {
@@ -46,5 +54,19 @@ export default {
     console.log(
       `${successCount} succeeded, ${failureCount} failed, ${newCount} new`
     )
+    ;(
+      Object.values(state.tests).filter(
+        (test) => test.status === 'failure'
+      ) as Array<FailedTest>
+    ).forEach((test) => {
+      console.log(
+        `${chalk.bold(test.url)} failed ${stageToLabel(test.stage)}${
+          test.error ? ' The error was:' : ''
+        }`
+      )
+      if (test.error) {
+        console.log(test.error)
+      }
+    })
   },
 }

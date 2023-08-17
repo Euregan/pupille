@@ -9,11 +9,21 @@ import { z } from 'zod'
 const sanitizeUrl = (url: string) =>
   slugify(url, { lower: true }).replace(/:/g, '')
 
-export type Test = {
+type BaseTest = {
   url: string
-  status: 'running' | 'new' | 'failure' | 'success'
+  status: 'running' | 'new' | 'success'
   waitFor?: string | Array<string>
 }
+
+export type FailedTest = {
+  url: string
+  status: 'failure'
+  waitFor?: string | Array<string>
+  stage: 'prepare' | 'loading' | 'waiting' | 'comparing'
+  error: any
+}
+
+export type Test = BaseTest | FailedTest
 
 export type Tests = Record<string, Test>
 
@@ -80,14 +90,65 @@ const checkUrl =
   (browser: Browser) => async (url: string, options: Options) => {
     const page = await browser.newPage()
 
-    await options.prepare(page)
+    try {
+      await options.prepare(page)
+    } catch (error) {
+      store.setState((state) => ({
+        ...state,
+        tests: {
+          ...state.tests,
+          [`${sanitizeUrl(url)}`]: {
+            ...state.tests[`${sanitizeUrl(url)}`],
+            status: 'failure',
+            stage: 'prepare',
+            error,
+          },
+        },
+      }))
 
-    await page.goto(`${options.baseUrl}${url}`)
+      return 0
+    }
+
+    try {
+      await page.goto(`${options.baseUrl}${url}`)
+    } catch (error) {
+      store.setState((state) => ({
+        ...state,
+        tests: {
+          ...state.tests,
+          [`${sanitizeUrl(url)}`]: {
+            ...state.tests[`${sanitizeUrl(url)}`],
+            status: 'failure',
+            stage: 'loading',
+            error,
+          },
+        },
+      }))
+
+      return 0
+    }
 
     // If the user has specified selectors to wait for, we wait for them
-    await Promise.all(
-      options.waitFor.map((selector) => page.waitForSelector(selector))
-    )
+    try {
+      await Promise.all(
+        options.waitFor.map((selector) => page.waitForSelector(selector))
+      )
+    } catch (error) {
+      store.setState((state) => ({
+        ...state,
+        tests: {
+          ...state.tests,
+          [`${sanitizeUrl(url)}`]: {
+            ...state.tests[`${sanitizeUrl(url)}`],
+            status: 'failure',
+            stage: 'waiting',
+            error,
+          },
+        },
+      }))
+
+      return 0
+    }
 
     // We take a new screenshot
     await page.screenshot({
@@ -137,6 +198,8 @@ const checkUrl =
       state[`${sanitizeUrl(url)}`] = {
         ...state[`${sanitizeUrl(url)}`],
         status: 'failure',
+        stage: 'comparing',
+        error: null,
       }
       store.setState({ tests: state })
 
