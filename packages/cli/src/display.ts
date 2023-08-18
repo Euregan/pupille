@@ -26,6 +26,7 @@ export default {
         0
       )
 
+      let pendingCount = 0
       let runningCount = 0
       let successCount = 0
       let failureCount = 0
@@ -34,20 +35,49 @@ export default {
       console.clear()
 
       Object.values(state.tests).forEach((test) => {
+        switch (test.status) {
+          case 'failure':
+            return failureCount++
+          case 'new':
+            return newCount++
+          case 'success':
+            return successCount++
+          case 'running':
+            return runningCount++
+          case 'pending':
+            return pendingCount++
+        }
+      })
+
+      if (runningCount + pendingCount === 0) {
+        ;(
+          Object.values(state.tests).filter(
+            (test) => test.status === 'failure'
+          ) as Array<FailedTest>
+        ).forEach((test) => {
+          console.log(
+            `${chalk.bold(test.url)} failed ${stageToLabel(test.stage)}${
+              test.error ? ' The error was:' : ''
+            }`
+          )
+          if (test.error) {
+            console.log(test.error)
+          }
+          console.log('')
+        })
+      }
+
+      Object.values(state.tests).forEach((test) => {
         process.stdout.write(test.url.padEnd(longestUrl + 1))
         process.stdout.write(' ')
         switch (test.status) {
           case 'failure':
-            failureCount++
             return console.log(chalk.bold.red('✗'), test.duration, 'ms')
           case 'new':
-            newCount++
             return console.log(chalk.bold.green('!'), test.duration, 'ms')
           case 'success':
-            successCount++
             return console.log(chalk.bold.green('✓'), test.duration, 'ms')
           case 'running':
-            runningCount++
             return console.log(
               chalk.bold(
                 // We update the spinner every 80ms
@@ -55,35 +85,20 @@ export default {
               )
             )
           case 'pending':
-            runningCount++
             return console.log(chalk.bold('-'))
         }
       })
 
       console.log('')
 
-      if (runningCount > 0) {
-        process.stdout.write(`${runningCount} tests running, `)
+      if (runningCount + pendingCount > 0) {
+        process.stdout.write(`${runningCount + pendingCount} tests running, `)
       } else {
         process.stdout.write('tests done, ')
       }
       console.log(
         `${successCount} succeeded, ${failureCount} failed, ${newCount} new`
       )
-      ;(
-        Object.values(state.tests).filter(
-          (test) => test.status === 'failure'
-        ) as Array<FailedTest>
-      ).forEach((test) => {
-        console.log(
-          `${chalk.bold(test.url)} failed ${stageToLabel(test.stage)}${
-            test.error ? ' The error was:' : ''
-          }`
-        )
-        if (test.error) {
-          console.log(test.error)
-        }
-      })
 
       if (running) {
         setTimeout(render, 1000 / 30)
