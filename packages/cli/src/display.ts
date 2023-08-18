@@ -5,7 +5,8 @@ const stageToLabel = (stage: FailedTest['stage']): string =>
   ({
     prepare: 'when setting up the test. Please check your prepare functions.',
     loading: 'when loading the page.',
-    waiting: 'when waiting for some elements to appear.',
+    waiting:
+      'when waiting for some elements to appear. A screenshot of the current state of the page has been taken.',
     comparing: 'when comparing previous and current screenshots.',
   }[stage])
 

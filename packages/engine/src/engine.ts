@@ -134,6 +134,10 @@ const checkUrl =
         options.waitFor.map((selector) => page.waitForSelector(selector))
       )
     } catch (error) {
+      await page.screenshot({
+        path: `${options.root}/new/${sanitizeUrl(url)}.png`,
+      })
+
       store.setState((state) => ({
         ...state,
         tests: {
