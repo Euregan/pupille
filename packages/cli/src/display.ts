@@ -13,9 +13,23 @@ const stageToLabel = (stage: FailedTest['stage']): string =>
 
 const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 
+const buffer = () => {
+  let lines: Array<string> = []
+
+  return {
+    line: (line: string) => lines.push(line),
+    render: () => {
+      console.clear()
+      console.log(lines.join('\n'))
+      lines = []
+    },
+  }
+}
+
 export default {
   render: (store: StoreApi<EngineState>) => {
     let running = true
+    const terminal = buffer()
 
     const render = () => {
       const state = store.getState()
@@ -31,8 +45,6 @@ export default {
       let successCount = 0
       let failureCount = 0
       let newCount = 0
-
-      console.clear()
 
       Object.values(state.tests).forEach((test) => {
         switch (test.status) {
@@ -55,50 +67,56 @@ export default {
             (test) => test.status === 'failure'
           ) as Array<FailedTest>
         ).forEach((test) => {
-          console.log(
+          terminal.line(
             `${chalk.bold(test.url)} failed ${stageToLabel(test.stage)}${
               test.error ? ' The error was:' : ''
             }`
           )
           if (test.error) {
-            console.log(test.error)
+            terminal.line(test.error)
           }
-          console.log('')
+          terminal.line('')
         })
       }
 
       Object.values(state.tests).forEach((test) => {
-        process.stdout.write(test.url.padEnd(longestUrl + 1))
-        process.stdout.write(' ')
+        let line = `${test.url.padEnd(longestUrl + 1)} `
         switch (test.status) {
           case 'failure':
-            return console.log(chalk.bold.red('✗'), test.duration, 'ms')
+            line += `${chalk.bold.red('✗')} ${test.duration} ms`
+            break
           case 'new':
-            return console.log(chalk.bold.green('!'), test.duration, 'ms')
+            line += `${chalk.bold.green('!')} ${test.duration} ms`
+            break
           case 'success':
-            return console.log(chalk.bold.green('✓'), test.duration, 'ms')
+            line += `${chalk.bold.green('✓')} ${test.duration} ms`
+            break
           case 'running':
-            return console.log(
-              chalk.bold(
-                // We update the spinner every 80ms
-                spinner[Math.ceil(new Date().getTime() / 80) % spinner.length]
-              )
+            line += chalk.bold(
+              // We update the spinner every 80ms
+              spinner[Math.ceil(new Date().getTime() / 80) % spinner.length]
             )
+            break
           case 'pending':
-            return console.log(chalk.bold('-'))
+            line += chalk.bold('-')
+            break
         }
+        terminal.line(line)
       })
 
-      console.log('')
+      terminal.line('')
 
-      if (runningCount + pendingCount > 0) {
-        process.stdout.write(`${runningCount + pendingCount} tests running, `)
-      } else {
-        process.stdout.write('tests done, ')
-      }
-      console.log(
-        `${successCount} succeeded, ${failureCount} failed, ${newCount} new`
+      terminal.line(
+        `${
+          runningCount + pendingCount > 0
+            ? `${runningCount + pendingCount} tests running, `
+            : 'tests done, '
+        }${successCount} succeeded, ${failureCount} failed, ${newCount} new`
       )
+
+      terminal.line('')
+
+      terminal.render()
 
       if (running) {
         setTimeout(render, 1000 / 30)
