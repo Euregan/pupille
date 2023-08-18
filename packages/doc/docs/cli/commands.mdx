@@ -3,13 +3,18 @@ sidebar_position: 1
 title: Commands
 ---
 
-## `open`
-
-Runs the Pupille server on your machine, and open the Pupille GUI in
-your browser. The configured URLs will be automatically checked once, and the
-results will appear in the browser.
-
 ## `check`
 
-Runs the Pupille checker, returning a non-zero exit code if there is any
-difference, or any new screenshot.
+Runs the Pupille checker. This command will make pupille go to each specified
+URL, wait for the specified selectors (if any), and take a screenshot. If there
+is any new URL, or if any existing screenshot doesn't match the new ones, the
+command will return a non-zero exit code.
+
+## `approve <tests>`
+
+When running the `check` command locally, you will sometimes get new
+screenshots, or a different result from the previous ones. If the changes are
+expected, you will need to approve them. You always need to specify which tests
+you want to approve. If you want to approve all of them at once, you can use the
+shorthand `*`. Otherwise you can specify the list of test URLs you want to
+approve by listing them, separated by a comma (`,`).

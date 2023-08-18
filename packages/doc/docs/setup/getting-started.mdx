@@ -6,10 +6,11 @@ title: Getting started
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
 
-Pupille is a visual testing tool, running directly on your computer and CI server.
+Pupille is a visual testing tool, running directly on your computer and CI
+server.
 
-Unlike other solutions, nothing runs in the cloud, and there is no need for paying
-a subscription.
+Unlike other solutions, nothing runs in the cloud, and there is no need for
+paying a subscription.
 
 ## Setting up
 
@@ -40,32 +41,35 @@ Create a `pupille.config.js` file with the following empty skeleton:
 
 ```json title="/pupille.config.js"
 module.exports = {
-  "tests": []
-};
+  baseUrl: '',
+  tests: []
+}
 ```
 
 You can start adding the URLs you want to test like so:
 
 ```json title="/pupille.config.js"
 module.exports = {
-  "tests": [{ "url": "https://pupille.io" }]
-};
+  baseUrl: 'http://localhost:3000',
+  tests: [
+    { url: '/login' },
+    { url: '/profile' },
+    { url: '/dashboard' }
+  ]
+}
 ```
 
 ### Testing it out
 
-Simply run `pupille open`:
+Simply run `pupille check`:
 
 ```shell
-npx pupille open
+npx pupille check
 ```
 
-This will run the Pupille server on your machine, and open the Pupille GUI in
-your browser. The configured URLs will be automatically checked once, and the
-results will appear in the browser. You can then check the URLs at any time by
-clicking the "Check" button in the page.
+This will run the Pupille checker on your machine, and screenshots will be
+generated automatically for the configured URLs.
 
-The results of the checked URLs are stored in a `pupille` folder located at the
-root of the project. You must **not** gitignore it, otherwise your CI will not
-be able to make sure that the URLs haven't changed. Only the last version of the
-screenshots are kept.
+If the results are as expected, you can approve all of the new screenshots with
+`npx pupille approve *`. If only some of the URLs are fine, you can specify
+which you want to approve (for example: `npx pupille approve /login,/profile`).
