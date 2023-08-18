@@ -15,8 +15,10 @@ program
   .action(async () => {
     try {
       const process = engine.run()
-      engine.store.subscribe(display.render)
+      const render = display.render(engine.store)
+
       await process
+      render.stop()
     } catch (error) {
       if (typeof error === 'object' && error && 'message' in error) {
         console.error(error.message)

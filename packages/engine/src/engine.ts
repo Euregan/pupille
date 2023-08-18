@@ -11,19 +11,27 @@ const sanitizeUrl = (url: string) =>
 
 type BaseTest = {
   url: string
-  status: 'running' | 'new' | 'success'
+  status: 'pending' | 'running'
   waitFor?: string | Array<string>
+}
+
+export type ResolvedTest = {
+  url: string
+  status: 'success' | 'new'
+  waitFor?: string | Array<string>
+  duration: number
 }
 
 export type FailedTest = {
   url: string
   status: 'failure'
   waitFor?: string | Array<string>
+  duration: number
   stage: 'prepare' | 'loading' | 'waiting' | 'comparing'
   error: any
 }
 
-export type Test = BaseTest | FailedTest
+export type Test = BaseTest | ResolvedTest | FailedTest
 
 export type Tests = Record<string, Test>
 
@@ -88,6 +96,18 @@ type Options = {
 
 const checkUrl =
   (browser: Browser) => async (url: string, options: Options) => {
+    const startTime = new Date().getTime()
+    store.setState((state) => ({
+      ...state,
+      tests: {
+        ...state.tests,
+        [`${sanitizeUrl(url)}`]: {
+          ...state.tests[`${sanitizeUrl(url)}`],
+          status: 'running',
+        },
+      },
+    }))
+
     const page = await browser.newPage()
 
     try {
@@ -100,6 +120,7 @@ const checkUrl =
           [`${sanitizeUrl(url)}`]: {
             ...state.tests[`${sanitizeUrl(url)}`],
             status: 'failure',
+            duration: new Date().getTime() - startTime,
             stage: 'prepare',
             error,
           },
@@ -119,6 +140,7 @@ const checkUrl =
           [`${sanitizeUrl(url)}`]: {
             ...state.tests[`${sanitizeUrl(url)}`],
             status: 'failure',
+            duration: new Date().getTime() - startTime,
             stage: 'loading',
             error,
           },
@@ -145,6 +167,7 @@ const checkUrl =
           [`${sanitizeUrl(url)}`]: {
             ...state.tests[`${sanitizeUrl(url)}`],
             status: 'failure',
+            duration: new Date().getTime() - startTime,
             stage: 'waiting',
             error,
           },
@@ -167,6 +190,7 @@ const checkUrl =
       state[`${sanitizeUrl(url)}`] = {
         ...state[`${sanitizeUrl(url)}`],
         status: 'new',
+        duration: new Date().getTime() - startTime,
       }
       store.setState({ tests: state })
 
@@ -202,6 +226,7 @@ const checkUrl =
       state[`${sanitizeUrl(url)}`] = {
         ...state[`${sanitizeUrl(url)}`],
         status: 'failure',
+        duration: new Date().getTime() - startTime,
         stage: 'comparing',
         error: null,
       }
@@ -212,6 +237,7 @@ const checkUrl =
       state[`${sanitizeUrl(url)}`] = {
         ...state[`${sanitizeUrl(url)}`],
         status: 'success',
+        duration: new Date().getTime() - startTime,
       }
       store.setState({ tests: state })
 
@@ -296,7 +322,7 @@ export const run = async () => {
   const tests = Object.fromEntries(
     config.tests.map(({ url }) => [
       sanitizeUrl(url),
-      { url, status: 'running' as const },
+      { url, status: 'pending' as const },
     ])
   )
   store.setState({ tests })
