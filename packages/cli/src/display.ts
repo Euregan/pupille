@@ -1,14 +1,13 @@
-import { EngineState, FailedTest } from '@pupille/engine'
+import { EngineState, ErrorTest } from '@pupille/engine'
 import chalk from 'chalk'
 import { StoreApi } from 'zustand'
 
-const stageToLabel = (stage: FailedTest['stage']): string =>
+const stageToLabel = (stage: ErrorTest['stage']): string =>
   ({
     prepare: 'when setting up the test. Please check your prepare functions.',
     loading: 'when loading the page.',
     waiting:
       'when waiting for some elements to appear. A screenshot of the current state of the page has been taken.',
-    comparing: 'when comparing previous and current screenshots.',
   }[stage])
 
 const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
@@ -49,6 +48,7 @@ export default {
       Object.values(state.tests).forEach((test) => {
         switch (test.status) {
           case 'failure':
+          case 'error':
             return failureCount++
           case 'new':
             return newCount++
@@ -64,8 +64,8 @@ export default {
       if (runningCount + pendingCount === 0) {
         ;(
           Object.values(state.tests).filter(
-            (test) => test.status === 'failure'
-          ) as Array<FailedTest>
+            (test) => test.status === 'error'
+          ) as Array<ErrorTest>
         ).forEach((test) => {
           terminal.line(
             `${chalk.bold(test.url)} failed ${stageToLabel(test.stage)}${
@@ -83,6 +83,7 @@ export default {
         let line = `${test.url.padEnd(longestUrl + 1)} `
         switch (test.status) {
           case 'failure':
+          case 'error':
             line += `${chalk.bold.red('✗')} ${test.duration} ms`
             break
           case 'new':

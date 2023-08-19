@@ -23,6 +23,13 @@ This property is optional, and allows you to specify a function to be run before
 each test. It should return a `Promise`, and takes a
 [Page](https://pptr.dev/api/puppeteer.page) as the only parameter.
 
+## `resolutions`
+
+This property is optional, and allows you to specify which resolution(s) you
+want the screenshots to be taken in. It is an array of a tuple containing the
+width and the height. You can list as many resolutions as you want. Each
+resolution will require a new page load. The default value is `[[1920, 1080]]`
+
 ## `tests`
 
 The main section of the configuration is found under the `tests` property. It's

@@ -44,31 +44,43 @@ program
     }
 
     console.log(
-      `${result.approved.length} URL${result.approved.length > 1 ? 's' : ''} ${
+      `${result.approved.length} test${result.approved.length > 1 ? 's' : ''} ${
         result.approved.length > 1 ? 'were' : 'was'
-      } approved:`
+      } approved`
     )
     result.approved.map((test) => console.log(` - ${test}`))
 
     if (result.failed.length > 0) {
       console.log(
-        `${result.failed.length} URL${result.failed.length > 1 ? 's' : ''} ${
-          result.failed.length > 1 ? 'were' : 'was'
-        } failed:`
+        `${result.failed.length} test${result.failed.length > 1 ? 's' : ''} ${
+          result.failed.length > 1 ? 'have' : 'has'
+        } failed to be approved`
       )
       result.failed.map((test) => console.log(` - ${test}`))
     }
 
     if (result.remaining.length > 0) {
       console.log(
-        `${result.remaining.length} URL${
+        `${result.remaining.length} test${
           result.remaining.length > 1 ? 's' : ''
-        } ${result.remaining.length > 1 ? 'remain' : 'remains'}:`
+        } ${result.remaining.length > 1 ? 'remain' : 'remains'}`
       )
       result.remaining.map((test) => console.log(` - ${test}`))
     } else {
       console.log('')
-      console.log(`${chalk.bold.green('✓')} All tests have been approved`)
+      if (result.errored.length > 0) {
+        console.log(
+          `${chalk.bold.green('✓')} All valid tests have been approved`
+        )
+        console.log(
+          `However, there are still ${result.errored.length} test${
+            result.errored.length > 1 ? 's' : ''
+          } that ${result.errored.length > 1 ? 'are' : 'is'} in error`
+        )
+        result.errored.map((test) => console.log(` - ${test}`))
+      } else {
+        console.log(`${chalk.bold.green('✓')} All tests have been approved`)
+      }
     }
   })
 

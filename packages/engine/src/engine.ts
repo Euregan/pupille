@@ -22,16 +22,23 @@ export type ResolvedTest = {
   duration: number
 }
 
+export type ErrorTest = {
+  url: string
+  status: 'error'
+  waitFor?: string | Array<string>
+  duration: number
+  stage: 'prepare' | 'loading' | 'waiting'
+  error: any
+}
+
 export type FailedTest = {
   url: string
   status: 'failure'
   waitFor?: string | Array<string>
   duration: number
-  stage: 'prepare' | 'loading' | 'waiting' | 'comparing'
-  error: any
 }
 
-export type Test = BaseTest | ResolvedTest | FailedTest
+export type Test = BaseTest | ResolvedTest | ErrorTest | FailedTest
 
 export type Tests = Record<string, Test>
 
@@ -57,6 +64,7 @@ const optionSchema = z.object({
 })
 
 const configSchema = z.object({
+  baseUrl: z.string(),
   root: z.string().optional().default('pupille'),
   prepare: z
     .function()
@@ -66,7 +74,11 @@ const configSchema = z.object({
     .default(
       () => () => new Promise<undefined>((resolve) => resolve(undefined))
     ),
-  baseUrl: z.string(),
+  resolutions: z
+    .array(z.tuple([z.number().int(), z.number().int()]))
+    .nonempty()
+    .optional()
+    .default([[1920, 1080]]),
   tests: z.array(optionSchema),
 })
 
@@ -81,6 +93,7 @@ const setupFolders = async (config: Config) => {
     fs.access(`${root}/new`).catch(() => fs.mkdir(`${root}/new`)),
     fs.access(`${root}/original`).catch(() => fs.mkdir(`${root}/original`)),
     fs.access(`${root}/results`).catch(() => fs.mkdir(`${root}/results`)),
+    fs.access(`${root}/error`).catch(() => fs.mkdir(`${root}/error`)),
     fs
       .access(`${root}/.gitignore`)
       .catch(() => fs.writeFile(`${root}/.gitignore`, 'new\nresults')),
@@ -92,6 +105,7 @@ type Options = {
   baseUrl: string
   waitFor: Array<string>
   prepare: (page: Page) => Promise<undefined>
+  resolution: [number, number]
 }
 
 const checkUrl =
@@ -109,6 +123,10 @@ const checkUrl =
     }))
 
     const page = await browser.newPage()
+    await page.setViewport({
+      width: options.resolution[0],
+      height: options.resolution[1],
+    })
 
     try {
       await options.prepare(page)
@@ -119,7 +137,7 @@ const checkUrl =
           ...state.tests,
           [`${sanitizeUrl(url)}`]: {
             ...state.tests[`${sanitizeUrl(url)}`],
-            status: 'failure',
+            status: 'error',
             duration: new Date().getTime() - startTime,
             stage: 'prepare',
             error,
@@ -157,7 +175,9 @@ const checkUrl =
       )
     } catch (error) {
       await page.screenshot({
-        path: `${options.root}/new/${sanitizeUrl(url)}.png`,
+        path: `${options.root}/error/${options.resolution[0]}x${
+          options.resolution[1]
+        }|${sanitizeUrl(url)}.png`,
       })
 
       store.setState((state) => ({
@@ -179,13 +199,19 @@ const checkUrl =
 
     // We take a new screenshot
     await page.screenshot({
-      path: `${options.root}/new/${sanitizeUrl(url)}.png`,
+      path: `${options.root}/new/${options.resolution[0]}x${
+        options.resolution[1]
+      }|${sanitizeUrl(url)}.png`,
     })
 
     const state = { ...store.getState().tests }
 
     try {
-      await fs.access(`${options.root}/original/${sanitizeUrl(url)}.png`)
+      await fs.access(
+        `${options.root}/original/${options.resolution[0]}x${
+          options.resolution[1]
+        }|${sanitizeUrl(url)}.png`
+      )
     } catch {
       state[`${sanitizeUrl(url)}`] = {
         ...state[`${sanitizeUrl(url)}`],
@@ -198,10 +224,18 @@ const checkUrl =
     }
 
     const img1 = PNG.sync.read(
-      await fs.readFile(`${options.root}/original/${sanitizeUrl(url)}.png`)
+      await fs.readFile(
+        `${options.root}/original/${options.resolution[0]}x${
+          options.resolution[1]
+        }|${sanitizeUrl(url)}.png`
+      )
     )
     const img2 = PNG.sync.read(
-      await fs.readFile(`${options.root}/new/${sanitizeUrl(url)}.png`)
+      await fs.readFile(
+        `${options.root}/new/${options.resolution[0]}x${
+          options.resolution[1]
+        }|${sanitizeUrl(url)}.png`
+      )
     )
     const { width, height } = img1
     const diff = new PNG({ width, height })
@@ -218,7 +252,9 @@ const checkUrl =
     )
 
     await fs.writeFile(
-      `${options.root}/results/${sanitizeUrl(url)}.png`,
+      `${options.root}/results/${options.resolution[0]}x${
+        options.resolution[1]
+      }|${sanitizeUrl(url)}.png`,
       PNG.sync.write(diff)
     )
 
@@ -227,8 +263,6 @@ const checkUrl =
         ...state[`${sanitizeUrl(url)}`],
         status: 'failure',
         duration: new Date().getTime() - startTime,
-        stage: 'comparing',
-        error: null,
       }
       store.setState({ tests: state })
 
@@ -260,18 +294,23 @@ const test = async (
   }
 
   try {
-    await checkUrl(browser)(tests[0].url, {
-      root: config.root,
-      baseUrl: config.baseUrl,
-      waitFor:
-        tests[0].waitFor === undefined
-          ? []
-          : Array.isArray(tests[0].waitFor)
-          ? tests[0].waitFor
-          : [tests[0].waitFor],
-      prepare: (page: Page) =>
-        config.prepare(page).then(() => tests[0].prepare(page)),
-    })
+    await Promise.all(
+      config.resolutions.map((resolution) =>
+        checkUrl(browser)(tests[0].url, {
+          root: config.root,
+          baseUrl: config.baseUrl,
+          waitFor:
+            tests[0].waitFor === undefined
+              ? []
+              : Array.isArray(tests[0].waitFor)
+              ? tests[0].waitFor
+              : [tests[0].waitFor],
+          prepare: (page: Page) =>
+            config.prepare(page).then(() => tests[0].prepare(page)),
+          resolution,
+        })
+      )
+    )
 
     return tests.length === 1
       ? { successes: [tests[0].url], failures: [] }
@@ -349,40 +388,63 @@ export const approve = async (urls?: Array<string>) => {
 
     urls = config.tests
       .map(({ url }) => url)
-      .filter((url) => pendingFiles.includes(`${sanitizeUrl(url)}.png`))
+      .filter((url) =>
+        pendingFiles.some((file) => file.endsWith(`${sanitizeUrl(url)}.png`))
+      )
   }
 
   const movedTests = await Promise.all(
-    urls.map((url) =>
-      fs
-        .copyFile(
-          `${config.root}/new/${sanitizeUrl(url)}.png`,
-          `${config.root}/original/${sanitizeUrl(url)}.png`
-        )
-        .then(() => ({
-          success: url,
-        }))
-        .catch(() => ({
-          failure: url,
-        }))
+    urls.flatMap((url) =>
+      config.resolutions.map((resolution) =>
+        fs
+          .copyFile(
+            `${config.root}/new/${resolution[0]}x${resolution[1]}|${sanitizeUrl(
+              url
+            )}.png`,
+            `${config.root}/original/${resolution[0]}x${
+              resolution[1]
+            }|${sanitizeUrl(url)}.png`
+          )
+          .then(() => ({
+            success: url,
+          }))
+          .catch(() => ({
+            failure: url,
+          }))
+      )
     )
   )
 
   await Promise.all(
     urls
-      .map((url) =>
-        fs.unlink(`${config.root}/new/${sanitizeUrl(url)}.png`).catch(() => {})
+      .flatMap((url) =>
+        config.resolutions.map((resolution) =>
+          fs
+            .unlink(
+              `${config.root}/new/${resolution[0]}x${
+                resolution[1]
+              }|${sanitizeUrl(url)}.png`
+            )
+            .catch(() => {})
+        )
       )
       .concat(
-        urls.map((url) =>
-          fs
-            .unlink(`${config.root}/results/${sanitizeUrl(url)}.png`)
-            .catch(() => {})
+        urls.flatMap((url) =>
+          config.resolutions.map((resolution) =>
+            fs
+              .unlink(
+                `${config.root}/results/${resolution[0]}x${
+                  resolution[1]
+                }|${sanitizeUrl(url)}.png`
+              )
+              .catch(() => {})
+          )
         )
       )
   )
 
   const remainingFiles = await fs.readdir(`${config.root}/new`)
+  const erroredFiles = await fs.readdir(`${config.root}/error`)
 
   return {
     approved: (
@@ -397,7 +459,14 @@ export const approve = async (urls?: Array<string>) => {
     ).map(({ failure }) => failure),
     remaining: config.tests
       .map(({ url }) => url)
-      .filter((url) => remainingFiles.includes(`${sanitizeUrl(url)}.png`)),
+      .filter((url) =>
+        remainingFiles.some((file) => file.endsWith(`${sanitizeUrl(url)}.png`))
+      ),
+    errored: config.tests
+      .map(({ url }) => url)
+      .filter((url) =>
+        erroredFiles.some((file) => file.endsWith(`${sanitizeUrl(url)}.png`))
+      ),
   }
 }
 
