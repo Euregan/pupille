@@ -39,23 +39,19 @@ yarn add pupille
 
 Create a `pupille.config.js` file with the following empty skeleton:
 
-```json title="/pupille.config.js"
+```js title="/pupille.config.js"
 module.exports = {
   baseUrl: '',
-  tests: []
+  tests: [],
 }
 ```
 
 You can start adding the URLs you want to test like so:
 
-```json title="/pupille.config.js"
+```js title="/pupille.config.js"
 module.exports = {
   baseUrl: 'http://localhost:3000',
-  tests: [
-    { url: '/login' },
-    { url: '/profile' },
-    { url: '/dashboard' }
-  ]
+  tests: [{ url: '/login' }, { url: '/profile' }, { url: '/dashboard' }],
 }
 ```
 
