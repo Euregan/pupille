@@ -26,5 +26,12 @@
   ],
   "devDependencies": {
     "turbo": "^1.10.12"
-  }
+  },
+  "keywords": [
+    "visual testing",
+    "visual regression",
+    "visual",
+    "testing",
+    "regression"
+  ]
 }
